@@ -1,75 +1,147 @@
 import cron from 'node-cron'
-import { getAllUsersWithWA, getPendingAccounts } from './firestore'
+import {
+  getAllUsersWithWA, getPendingAccounts, getWeeklySummary, drainNotificationQueue,
+} from './firestore'
 import { getCurrentWeekId, isInQuietHours } from './checker'
-import { buildReminderMessage } from './messages'
+import {
+  buildReminderMessage, buildWeeklySummaryMessage, buildTestMessage,
+} from './messages'
 import { sendMessage, isClientReady } from './whatsapp'
 import { config } from './config'
 
-/**
- * Verifica todos os usuários com WA ativo e envia lembretes
- * para os que ainda têm drops pendentes nessa semana.
- */
-async function runNotifications(attempt: number): Promise<void> {
+// ─── Processador da fila de notificações (roda a cada minuto) ─────────────────
+
+async function processQueue(): Promise<void> {
+  if (!isClientReady()) return
+
+  const items = await drainNotificationQueue()
+  if (items.length === 0) return
+
+  console.log(`[Queue] ${items.length} notificação(ões) pendente(s)`)
+
+  for (const item of items) {
+    try {
+      const users = await getAllUsersWithWA()
+      const userConfig = users.find(u => u.uid === item.uid)
+      if (!userConfig) continue
+
+      const { phone, encheSaco } = userConfig.whatsapp
+
+      if (item.type === 'test') {
+        await sendMessage(phone, buildTestMessage())
+        console.log(`[Queue] ✅ Teste enviado para uid ${item.uid}`)
+
+      } else if (item.type === 'weekly_summary') {
+        const weekId = getCurrentWeekId()
+        const summary = await getWeeklySummary(item.uid, weekId)
+        await sendMessage(phone, buildWeeklySummaryMessage(summary))
+        console.log(`[Queue] ✅ Resumo semanal para uid ${item.uid}`)
+
+      } else if (item.type === 'drop_registered') {
+        // Confirmação de drop registrado — mensagem de incentivo
+        const weekId = getCurrentWeekId()
+        const summary = await getWeeklySummary(item.uid, weekId)
+        const allDone = summary.pending.length === 0
+        const msg = allDone
+          ? `🎮 *LootFlow* — Drop registrado!\n\n✅ Todos os drops dessa semana foram registrados.\n💰 Cashout total: *R$ ${summary.totalCashout.toFixed(2)}*\n\n💪 Semana boa! Continue farmando.`
+          : `🎮 *LootFlow* — Drop registrado!\n\n📊 Progresso: ${summary.totalDrops} drops | R$ ${summary.totalCashout.toFixed(2)}\n⚠️ Ainda faltam: ${summary.pending.map(p => p.name).join(', ')}`
+        await sendMessage(phone, msg)
+      }
+    } catch (e) {
+      console.error(`[Queue] ❌ Erro ao processar notificação ${item.docId}:`, e)
+    }
+  }
+}
+
+// ─── Lembretes periódicos ─────────────────────────────────────────────────────
+
+async function runReminders(attempt: number): Promise<void> {
   if (!isClientReady()) {
-    console.log('[Scheduler] WhatsApp não pronto, pulando rodada.')
+    console.log('[Scheduler] WhatsApp não pronto, pulando.')
     return
   }
 
-  console.log(`\n[Scheduler] 🔍 Rodada ${attempt} — ${new Date().toISOString()}`)
+  console.log(`\n[Scheduler] 🔍 Lembrete tentativa ${attempt} — ${new Date().toISOString()}`)
   const weekId = getCurrentWeekId()
   const users = await getAllUsersWithWA()
   console.log(`[Scheduler] ${users.length} usuário(s) com WhatsApp ativo`)
 
   for (const { uid, whatsapp } of users) {
     try {
-      // Verifica quiet hours
       if (isInQuietHours(whatsapp.quietStart, whatsapp.quietEnd, config.tzOffset)) {
-        console.log(`[Scheduler] ⏸ uid ${uid} — dentro do horário de silêncio`)
+        console.log(`[Scheduler] ⏸ uid ${uid} — horário de silêncio`)
         continue
       }
 
-      // Verifica dia da semana (remindDays do usuário)
       const todayDay = new Date().getDay()
       if (!whatsapp.remindDays.includes(todayDay)) {
-        console.log(`[Scheduler] ⏭ uid ${uid} — hoje não é dia de lembrete`)
+        console.log(`[Scheduler] ⏭ uid ${uid} — não é dia de lembrete`)
         continue
       }
 
       const pending = await getPendingAccounts(uid, weekId)
       if (pending.length === 0) {
-        console.log(`[Scheduler] ✅ uid ${uid} — todos os drops registrados`)
+        console.log(`[Scheduler] ✅ uid ${uid} — tudo registrado`)
         continue
       }
 
-      const msg = buildReminderMessage(pending, attempt)
+      const msg = buildReminderMessage(pending, attempt, whatsapp.encheSaco ?? false)
       await sendMessage(whatsapp.phone, msg)
     } catch (e) {
-      console.error(`[Scheduler] ❌ Erro ao processar uid ${uid}:`, e)
+      console.error(`[Scheduler] ❌ uid ${uid}:`, e)
     }
   }
 }
 
+// ─── Resumo semanal (terça cedo) ──────────────────────────────────────────────
+
+async function runWeeklySummaries(): Promise<void> {
+  if (!isClientReady()) return
+
+  console.log('\n[Scheduler] 📊 Enviando resumos semanais...')
+  const weekId = getCurrentWeekId()
+  const users = await getAllUsersWithWA()
+
+  for (const { uid, whatsapp } of users) {
+    if (!whatsapp.weeklySummary) continue
+    try {
+      const summary = await getWeeklySummary(uid, weekId)
+      // Só envia resumo se tiver ao menos 1 drop registrado
+      if (summary.totalDrops === 0) continue
+      await sendMessage(whatsapp.phone, buildWeeklySummaryMessage(summary))
+      console.log(`[Scheduler] ✅ Resumo semanal para uid ${uid}`)
+    } catch (e) {
+      console.error(`[Scheduler] ❌ Resumo para uid ${uid}:`, e)
+    }
+  }
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+
 export function startScheduler(): void {
-  // Cron usa UTC — BRT = UTC-3, então:
-  // 10:00 BRT = 13:00 UTC → "0 13 * * *"
-  // 18:00 BRT = 21:00 UTC → "0 21 * * *"
-  // 12:00 BRT = 15:00 UTC → "0 15 * * *"
-  //
-  // Tentativa 1: toda terça 10h BRT (CS2 reseta terça)
-  cron.schedule('0 13 * * 2', () => runNotifications(1), { timezone: 'UTC' })
+  // Verifica fila de notificações a cada minuto
+  cron.schedule('* * * * *', () => processQueue(), { timezone: 'UTC' })
 
-  // Tentativa 2: toda terça 18h BRT (follow-up)
-  cron.schedule('0 21 * * 2', () => runNotifications(2), { timezone: 'UTC' })
+  // Resumo semanal: terça 08h BRT = 11h UTC
+  cron.schedule('0 11 * * 2', () => runWeeklySummaries(), { timezone: 'UTC' })
 
-  // Tentativa 3: toda quarta 12h BRT
-  cron.schedule('0 15 * * 3', () => runNotifications(3), { timezone: 'UTC' })
+  // Lembretes de drop:
+  // Terça  10h BRT = 13h UTC (1ª tentativa — drops acabaram de resetar)
+  cron.schedule('0 13 * * 2', () => runReminders(1), { timezone: 'UTC' })
+  // Terça  18h BRT = 21h UTC (2ª — ainda tem tempo)
+  cron.schedule('0 21 * * 2', () => runReminders(2), { timezone: 'UTC' })
+  // Quarta 12h BRT = 15h UTC (3ª — urgência)
+  cron.schedule('0 15 * * 3', () => runReminders(3), { timezone: 'UTC' })
+  // Quinta 10h BRT = 13h UTC (4ª — última chamada, modo enche saco vai longe)
+  cron.schedule('0 13 * * 4', () => runReminders(4), { timezone: 'UTC' })
+  // Sexta  10h BRT = 13h UTC (5ª — só modo enche saco)
+  cron.schedule('0 13 * * 5', () => runReminders(5), { timezone: 'UTC' })
 
-  // Tentativa 4: toda quinta 10h BRT
-  cron.schedule('0 13 * * 4', () => runNotifications(3), { timezone: 'UTC' })
-
-  console.log('[Scheduler] ✅ Crons registrados:')
-  console.log('  → Terça  10h BRT (1ª tentativa)')
-  console.log('  → Terça  18h BRT (2ª tentativa)')
-  console.log('  → Quarta 12h BRT (3ª tentativa)')
-  console.log('  → Quinta 10h BRT (4ª tentativa)')
+  console.log('[Scheduler] ✅ Crons ativos:')
+  console.log('  • A cada minuto   — processa fila (testes, confirmações)')
+  console.log('  • Terça  08h BRT  — resumo semanal')
+  console.log('  • Terça  10h/18h  — lembretes (1ª e 2ª tentativa)')
+  console.log('  • Quarta 12h      — lembrete (3ª tentativa)')
+  console.log('  • Quinta 10h      — lembrete (4ª — última chamada)')
+  console.log('  • Sexta  10h      — lembrete (5ª — só modo enche saco)')
 }
