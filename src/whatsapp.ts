@@ -3,13 +3,10 @@ import qrcode from 'qrcode-terminal'
 import { config } from './config'
 import { findUidByPhone, disableWhatsApp } from './firestore'
 import { buildStopConfirmMessage } from './messages'
+import { setCurrentQR, setBotConnected, setBotDisconnected } from './server'
 
 let client: Client
 let isReady = false
-
-export function getClient(): Client {
-  return client
-}
 
 export function isClientReady(): boolean {
   return isReady
@@ -21,9 +18,7 @@ export async function sendMessage(phone: string, text: string): Promise<void> {
     return
   }
   try {
-    // WhatsApp espera o número no formato "55XXXXXXXXXXX@c.us"
-    const chatId = `${phone}@c.us`
-    await client.sendMessage(chatId, text)
+    await client.sendMessage(`${phone}@c.us`, text)
     console.log(`[WA] ✅ Mensagem enviada para ${phone}`)
   } catch (e) {
     console.error(`[WA] ❌ Falha ao enviar para ${phone}:`, e)
@@ -32,53 +27,59 @@ export async function sendMessage(phone: string, text: string): Promise<void> {
 
 export function initWhatsApp(): Promise<void> {
   return new Promise((resolve) => {
+    // No Railway o Chromium fica em /usr/bin/chromium
+    const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH ?? undefined
+
     client = new Client({
       authStrategy: new LocalAuth({ dataPath: config.whatsapp.sessionPath }),
       puppeteer: {
         headless: true,
+        executablePath,
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
           '--disable-gpu',
+          '--single-process',
+          '--no-zygote',
         ],
       },
     })
 
     client.on('qr', (qr) => {
-      console.log('\n[WA] Escaneie o QR code abaixo com o número dedicado:\n')
+      // Mostra no terminal (local) E atualiza o endpoint HTTP (Railway)
+      console.log('\n[WA] QR code disponível em /qr\n')
       qrcode.generate(qr, { small: true })
+      setCurrentQR(qr)
     })
 
     client.on('ready', () => {
       isReady = true
+      setBotConnected()
       const info = client.info
-      console.log(`[WA] ✅ Conectado como: ${info.pushname} (${info.wid.user})`)
+      console.log(`[WA] ✅ Conectado: ${info.pushname} (${info.wid.user})`)
       resolve()
     })
 
     client.on('disconnected', (reason) => {
       isReady = false
+      setBotDisconnected()
       console.warn(`[WA] ⚠️ Desconectado: ${reason}`)
     })
 
     client.on('auth_failure', (msg) => {
-      console.error('[WA] ❌ Falha de autenticação:', msg)
+      console.error('[WA] ❌ Falha de auth:', msg)
     })
 
-    // Escuta "PARAR" para desativar notificações do usuário
+    // Comando PARAR
     client.on('message', async (msg) => {
-      const text = msg.body?.trim().toUpperCase()
-      if (text !== 'PARAR') return
-
+      if (msg.body?.trim().toUpperCase() !== 'PARAR') return
       const phone = msg.from.replace('@c.us', '')
-      console.log(`[WA] Comando PARAR recebido de ${phone}`)
-
+      console.log(`[WA] PARAR recebido de ${phone}`)
       const uid = await findUidByPhone(phone)
       if (uid) {
         await disableWhatsApp(uid)
         await sendMessage(phone, buildStopConfirmMessage())
-        console.log(`[WA] Notificações desativadas para uid ${uid}`)
       }
     })
 

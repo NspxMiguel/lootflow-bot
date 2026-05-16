@@ -1,3 +1,4 @@
+import { startServer } from './server'
 import { initWhatsApp } from './whatsapp'
 import { startScheduler } from './scheduler'
 
@@ -6,14 +7,20 @@ async function main() {
   console.log('║      LootFlow WhatsApp Bot   ║')
   console.log('╚══════════════════════════════╝\n')
 
-  // 1. Conecta ao WhatsApp (pode mostrar QR code na primeira vez)
+  // 1. Sobe o servidor HTTP (QR code + health check)
+  const port = parseInt(process.env.PORT ?? '3000', 10)
+  startServer(port)
+
+  // 2. Conecta ao WhatsApp
+  // No Railway: abra a URL do projeto + /qr para escanear o QR code
   console.log('[Boot] Inicializando WhatsApp...')
+  console.log('[Boot] → Acesse a URL do Railway + /qr para escanear o QR code\n')
   await initWhatsApp()
 
-  // 2. Sobe os crons de lembrete
+  // 3. Sobe os crons
   startScheduler()
 
-  console.log('\n[Boot] 🚀 Bot rodando. Ctrl+C para parar.\n')
+  console.log('\n[Boot] 🚀 Bot rodando!\n')
 }
 
 main().catch((e) => {
