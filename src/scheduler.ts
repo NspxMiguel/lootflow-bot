@@ -1,6 +1,7 @@
 import cron from 'node-cron'
 import {
   getAllUsersWithWA, getPendingAccounts, getWeeklySummary, drainNotificationQueue,
+  getUserWASettings,
 } from './firestore'
 import { getCurrentWeekId, isInQuietHours } from './checker'
 import {
@@ -21,31 +22,41 @@ async function processQueue(): Promise<void> {
 
   for (const item of items) {
     try {
-      const users = await getAllUsersWithWA()
-      const userConfig = users.find(u => u.uid === item.uid)
-      if (!userConfig) continue
-
-      const { phone, encheSaco } = userConfig.whatsapp
-
       if (item.type === 'test') {
-        await sendMessage(phone, buildTestMessage())
-        console.log(`[Queue] ✅ Teste enviado para uid ${item.uid}`)
+        // Teste: busca settings diretamente pelo uid, sem exigir enabled=true
+        const wa = await getUserWASettings(item.uid)
+        if (!wa) {
+          console.warn(`[Queue] ⚠️ Teste ignorado — uid ${item.uid} sem número configurado`)
+          continue
+        }
+        await sendMessage(wa.phone, buildTestMessage())
+        console.log(`[Queue] ✅ Teste enviado para uid ${item.uid} (${wa.phone})`)
 
-      } else if (item.type === 'weekly_summary') {
-        const weekId = getCurrentWeekId()
-        const summary = await getWeeklySummary(item.uid, weekId)
-        await sendMessage(phone, buildWeeklySummaryMessage(summary))
-        console.log(`[Queue] ✅ Resumo semanal para uid ${item.uid}`)
+      } else {
+        // Outros tipos: requer whatsapp.enabled = true
+        const users = await getAllUsersWithWA()
+        const userConfig = users.find(u => u.uid === item.uid)
+        if (!userConfig) continue
 
-      } else if (item.type === 'drop_registered') {
-        // Confirmação de drop registrado — mensagem de incentivo
-        const weekId = getCurrentWeekId()
-        const summary = await getWeeklySummary(item.uid, weekId)
-        const allDone = summary.pending.length === 0
-        const msg = allDone
-          ? `🎮 *LootFlow* — Drop registrado!\n\n✅ Todos os drops dessa semana foram registrados.\n💰 Cashout total: *R$ ${summary.totalCashout.toFixed(2)}*\n\n💪 Semana boa! Continue farmando.`
-          : `🎮 *LootFlow* — Drop registrado!\n\n📊 Progresso: ${summary.totalDrops} drops | R$ ${summary.totalCashout.toFixed(2)}\n⚠️ Ainda faltam: ${summary.pending.map(p => p.name).join(', ')}`
-        await sendMessage(phone, msg)
+        const { phone, encheSaco } = userConfig.whatsapp
+
+        if (item.type === 'weekly_summary') {
+          const weekId = getCurrentWeekId()
+          const summary = await getWeeklySummary(item.uid, weekId)
+          await sendMessage(phone, buildWeeklySummaryMessage(summary))
+          console.log(`[Queue] ✅ Resumo semanal para uid ${item.uid}`)
+
+        } else if (item.type === 'drop_registered') {
+          const weekId = getCurrentWeekId()
+          const summary = await getWeeklySummary(item.uid, weekId)
+          const allDone = summary.pending.length === 0
+          const msg = allDone
+            ? `🎮 *LootFlow* — Drop registrado!\n\n✅ Todos os drops dessa semana foram registrados.\n💰 Cashout total: *R$ ${summary.totalCashout.toFixed(2)}*\n\n💪 Semana boa! Continue farmando.`
+            : `🎮 *LootFlow* — Drop registrado!\n\n📊 Progresso: ${summary.totalDrops} drops | R$ ${summary.totalCashout.toFixed(2)}\n⚠️ Ainda faltam: ${summary.pending.map(p => p.name).join(', ')}`
+          await sendMessage(phone, msg)
+        }
+
+        void encheSaco // suprime unused warning
       }
     } catch (e) {
       console.error(`[Queue] ❌ Erro ao processar notificação ${item.docId}:`, e)

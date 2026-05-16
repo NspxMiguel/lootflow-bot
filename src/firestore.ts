@@ -94,6 +94,17 @@ export async function findUidByPhone(phone: string): Promise<string | null> {
   return users.find(u => u.whatsapp.phone === phone)?.uid ?? null
 }
 
+/** Busca as configurações de WhatsApp de um usuário específico (independente de enabled) */
+export async function getUserWASettings(uid: string): Promise<WhatsAppSettings | null> {
+  try {
+    const doc = await db.collection('users').doc(uid).collection('settings').doc('app').get()
+    const wa = (doc.data() as AppSettings | undefined)?.whatsapp
+    return wa?.phone?.length >= 12 ? wa : null
+  } catch {
+    return null
+  }
+}
+
 /** Desativa WhatsApp de um usuário */
 export async function disableWhatsApp(uid: string): Promise<void> {
   await db.collection('users').doc(uid).collection('settings').doc('app')
