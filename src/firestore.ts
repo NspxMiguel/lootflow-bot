@@ -99,7 +99,7 @@ export async function getUserWASettings(uid: string): Promise<WhatsAppSettings |
   try {
     const doc = await db.collection('users').doc(uid).collection('settings').doc('app').get()
     const wa = (doc.data() as AppSettings | undefined)?.whatsapp
-    return wa?.phone?.length >= 12 ? wa : null
+    return (wa && wa.phone && wa.phone.length >= 12) ? wa : null
   } catch {
     return null
   }
