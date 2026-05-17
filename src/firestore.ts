@@ -28,6 +28,8 @@ export interface WhatsAppSettings {
   encheSacoInterval: number   // minutos entre lembretes (30, 60, 90, 120...)
   weeklySummary: boolean
   xingamentos: boolean        // modo palavrão
+  verified?: boolean          // true = número confirmado via código
+  verifyCode?: string         // código de 6 dígitos para verificação
   lastReminderAt?: string     // ISO timestamp do último lembrete enviado
 }
 
@@ -79,7 +81,7 @@ export async function getAllUsersWithWA(): Promise<UserNotifConfig[]> {
         const settingsDoc = await userRef.collection('settings').doc('app').get()
         const settings = settingsDoc.data() as AppSettings | undefined
         const wa = settings?.whatsapp
-        if (wa?.enabled && wa.phone?.length >= 12) {
+        if (wa?.enabled && wa.verified && wa.phone?.length >= 12) {
           result.push({ uid: userRef.id, whatsapp: wa })
         }
       } catch (e) {
@@ -106,6 +108,25 @@ export async function getUserWASettings(uid: string): Promise<WhatsAppSettings |
   } catch {
     return null
   }
+}
+
+/** Verifica o código enviado pelo usuário — retorna uid se ok, null se inválido */
+export async function verifyPhoneCode(phone: string, code: string): Promise<string | null> {
+  const usersSnap = await db.collection('users').listDocuments()
+  for (const userRef of usersSnap) {
+    try {
+      const doc = await userRef.collection('settings').doc('app').get()
+      const wa = (doc.data() as AppSettings | undefined)?.whatsapp
+      if (wa?.verifyCode === code && wa?.phone === phone) {
+        await userRef.collection('settings').doc('app').update({
+          'whatsapp.verified': true,
+          'whatsapp.verifyCode': null,
+        })
+        return userRef.id
+      }
+    } catch {}
+  }
+  return null
 }
 
 /** Desativa WhatsApp de um usuário */

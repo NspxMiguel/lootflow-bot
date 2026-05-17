@@ -1,7 +1,7 @@
 import { Client, LocalAuth } from 'whatsapp-web.js'
 import qrcode from 'qrcode-terminal'
 import { config } from './config'
-import { findUidByPhone, disableWhatsApp, getDropStatus, registerDropViaBot, getAllUsersWithWA } from './firestore'
+import { findUidByPhone, disableWhatsApp, getDropStatus, registerDropViaBot, getAllUsersWithWA, verifyPhoneCode } from './firestore'
 import {
   buildStopConfirmMessage, buildHelpMessage, buildDropStatusMessage,
   buildDropRegisteredMessage, buildAccountNotFoundMessage,
@@ -90,8 +90,20 @@ export function initWhatsApp(): Promise<void> {
 
       console.log(`[WA] Mensagem de ${phone}: "${body}"`)
 
+      // Código de verificação: 6 dígitos exatos — verifica antes de checar o uid
+      if (/^\d{6}$/.test(body)) {
+        const verifiedUid = await verifyPhoneCode(phone, body)
+        if (verifiedUid) {
+          await sendMessage(phone, `✅ *LootFlow* — Número verificado!\n\nBeleza, tá tudo certo. A partir de agora você vai receber os lembretes de drop aqui.\n\nManda *AJUDA* pra ver os comandos disponíveis.`)
+          console.log(`[WA] ✅ Número ${phone} verificado para uid ${verifiedUid}`)
+        } else {
+          await sendMessage(phone, `❌ Código inválido ou expirado.\n\nGera um novo código lá no LootFlow → Configurações → Notificações WhatsApp.`)
+        }
+        return
+      }
+
       const uid = await findUidByPhone(phone)
-      if (!uid) return // número não cadastrado, ignora
+      if (!uid) return // número não cadastrado ou não verificado, ignora
 
       // PARAR
       if (upper === 'PARAR') {
