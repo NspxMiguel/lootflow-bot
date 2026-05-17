@@ -34,12 +34,11 @@ export function initWhatsApp(): Promise<void> {
     // No Railway o Chromium fica em /usr/bin/chromium
     const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH ?? undefined
 
-    // Usa /data/session se existir (Railway Volume), senão fallback local
     const sessionDataPath = process.env.WHATSAPP_SESSION_PATH ?? config.whatsapp.sessionPath
     console.log(`[WA] Session path: ${sessionDataPath}`)
 
     client = new Client({
-      authStrategy: new LocalAuth({ dataPath: sessionDataPath, clientId: 'lootflow' }),
+      authStrategy: new LocalAuth({ dataPath: sessionDataPath }),
       puppeteer: {
         headless: true,
         executablePath,

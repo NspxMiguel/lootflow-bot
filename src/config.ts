@@ -13,7 +13,7 @@ export const config = {
     privateKey: required('FIREBASE_PRIVATE_KEY').replace(/\\n/g, '\n'),
   },
   whatsapp: {
-    sessionPath: process.env.WHATSAPP_SESSION_PATH ?? '/data/session',
+    sessionPath: process.env.WHATSAPP_SESSION_PATH ?? '/data',
   },
   tzOffset: parseInt(process.env.TZ_OFFSET ?? '-3', 10),
 }

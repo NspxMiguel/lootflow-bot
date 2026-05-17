@@ -5,7 +5,7 @@ import fs from 'fs'
 
 async function main() {
   // Garante que o diretório de sessão existe (Railway Volume pode estar vazio)
-  const sessionPath = process.env.WHATSAPP_SESSION_PATH ?? '/data/session'
+  const sessionPath = process.env.WHATSAPP_SESSION_PATH ?? '/data'
   if (!fs.existsSync(sessionPath)) {
     fs.mkdirSync(sessionPath, { recursive: true })
     console.log(`[Boot] Diretório de sessão criado: ${sessionPath}`)
