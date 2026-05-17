@@ -140,6 +140,10 @@ export function initWhatsApp(): Promise<void> {
         await sendMessage(phone, buildDropRegisteredMessage(result.accountName, result.dropNumber, steamValue))
         return
       }
+
+      // Qualquer outra mensagem → mostra ajuda
+      await sendMessage(phone, buildHelpMessage())
+
     })
 
     client.initialize()

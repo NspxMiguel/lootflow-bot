@@ -25,7 +25,9 @@ export interface WhatsAppSettings {
   quietEnd: string
   remindDays: number[]
   encheSaco: boolean
+  encheSacoInterval: number   // minutos entre lembretes (30, 60, 90, 120...)
   weeklySummary: boolean
+  lastReminderAt?: string     // ISO timestamp do último lembrete enviado
 }
 
 interface AppSettings {
@@ -109,6 +111,12 @@ export async function getUserWASettings(uid: string): Promise<WhatsAppSettings |
 export async function disableWhatsApp(uid: string): Promise<void> {
   await db.collection('users').doc(uid).collection('settings').doc('app')
     .update({ 'whatsapp.enabled': false })
+}
+
+/** Salva o timestamp do último lembrete enviado */
+export async function saveLastReminderAt(uid: string): Promise<void> {
+  await db.collection('users').doc(uid).collection('settings').doc('app')
+    .update({ 'whatsapp.lastReminderAt': new Date().toISOString() })
 }
 
 /** Atualiza o número de WhatsApp de um usuário */

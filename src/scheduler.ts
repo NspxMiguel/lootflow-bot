@@ -1,7 +1,7 @@
 import cron from 'node-cron'
 import {
   getAllUsersWithWA, getPendingAccounts, getWeeklySummary, drainNotificationQueue,
-  getUserWASettings,
+  getUserWASettings, saveLastReminderAt,
 } from './firestore'
 import { getCurrentWeekId, isInQuietHours } from './checker'
 import {
@@ -23,7 +23,6 @@ async function processQueue(): Promise<void> {
   for (const item of items) {
     try {
       if (item.type === 'test' || item.type === 'force_reminder') {
-        // test / force_reminder: sem exigir enabled=true, sem checar dia/horário
         const wa = await getUserWASettings(item.uid)
         if (!wa) {
           console.warn(`[Queue] ⚠️ ${item.type} ignorado — uid ${item.uid} sem número`)
@@ -33,7 +32,6 @@ async function processQueue(): Promise<void> {
           await sendMessage(wa.phone, buildTestMessage())
           console.log(`[Queue] ✅ Teste enviado para uid ${item.uid} (${wa.phone})`)
         } else {
-          // force_reminder: mostra lembrete real com drops pendentes
           const weekId = getCurrentWeekId()
           const pending = await getPendingAccounts(item.uid, weekId)
           if (pending.length === 0) {
@@ -45,12 +43,11 @@ async function processQueue(): Promise<void> {
         }
 
       } else {
-        // Outros tipos: requer whatsapp.enabled = true
         const users = await getAllUsersWithWA()
         const userConfig = users.find(u => u.uid === item.uid)
         if (!userConfig) continue
 
-        const { phone, encheSaco } = userConfig.whatsapp
+        const { phone } = userConfig.whatsapp
 
         if (item.type === 'weekly_summary') {
           const weekId = getCurrentWeekId()
@@ -67,8 +64,6 @@ async function processQueue(): Promise<void> {
             : `🎮 *LootFlow* — Drop registrado!\n\n📊 Progresso: ${summary.totalDrops} drops | R$ ${summary.totalCashout.toFixed(2)}\n⚠️ Ainda faltam: ${summary.pending.map(p => p.name).join(', ')}`
           await sendMessage(phone, msg)
         }
-
-        void encheSaco // suprime unused warning
       }
     } catch (e) {
       console.error(`[Queue] ❌ Erro ao processar notificação ${item.docId}:`, e)
@@ -76,40 +71,65 @@ async function processQueue(): Promise<void> {
   }
 }
 
-// ─── Lembretes periódicos ─────────────────────────────────────────────────────
+// ─── Lembretes periódicos (roda a cada 30 min) ────────────────────────────────
 
-async function runReminders(attempt: number): Promise<void> {
-  if (!isClientReady()) {
-    console.log('[Scheduler] WhatsApp não pronto, pulando.')
-    return
-  }
+async function runReminders(): Promise<void> {
+  if (!isClientReady()) return
 
-  console.log(`\n[Scheduler] 🔍 Lembrete tentativa ${attempt} — ${new Date().toISOString()}`)
+  const now = new Date()
   const weekId = getCurrentWeekId()
   const users = await getAllUsersWithWA()
-  console.log(`[Scheduler] ${users.length} usuário(s) com WhatsApp ativo`)
 
   for (const { uid, whatsapp } of users) {
     try {
-      if (isInQuietHours(whatsapp.quietStart, whatsapp.quietEnd, config.tzOffset)) {
-        console.log(`[Scheduler] ⏸ uid ${uid} — horário de silêncio`)
-        continue
-      }
+      // Dia de lembrete?
+      if (!whatsapp.remindDays.includes(now.getDay())) continue
 
-      const todayDay = new Date().getDay()
-      if (!whatsapp.remindDays.includes(todayDay)) {
-        console.log(`[Scheduler] ⏭ uid ${uid} — não é dia de lembrete`)
-        continue
-      }
+      // Horário de silêncio?
+      if (isInQuietHours(whatsapp.quietStart, whatsapp.quietEnd, config.tzOffset)) continue
 
+      // Drops pendentes?
       const pending = await getPendingAccounts(uid, weekId)
-      if (pending.length === 0) {
-        console.log(`[Scheduler] ✅ uid ${uid} — tudo registrado`)
-        continue
+      if (pending.length === 0) continue
+
+      if (whatsapp.encheSaco) {
+        // Modo enche o saco: respeita o intervalo configurado
+        const intervalMs = (whatsapp.encheSacoInterval ?? 60) * 60 * 1000
+        const lastAt = whatsapp.lastReminderAt ? new Date(whatsapp.lastReminderAt).getTime() : 0
+        const elapsed = now.getTime() - lastAt
+
+        if (elapsed < intervalMs) {
+          const remaining = Math.ceil((intervalMs - elapsed) / 60000)
+          console.log(`[Scheduler] ⏱ uid ${uid} — próximo em ${remaining} min`)
+          continue
+        }
+
+        // Calcula tentativa com base no número de intervalos passados desde o início do dia
+        const startOfDay = new Date(now)
+        startOfDay.setHours(0, 0, 0, 0)
+        const msSinceDay = now.getTime() - startOfDay.getTime()
+        const attempt = Math.floor(msSinceDay / intervalMs) + 1
+
+        const msg = buildReminderMessage(pending, attempt, true)
+        await sendMessage(whatsapp.phone, msg)
+        await saveLastReminderAt(uid)
+        console.log(`[Scheduler] 🔔 Enche saco tentativa ${attempt} para uid ${uid}`)
+
+      } else {
+        // Modo normal: envia só uma vez por dia (se ainda não enviou hoje)
+        const lastAt = whatsapp.lastReminderAt ? new Date(whatsapp.lastReminderAt) : null
+        const today = now.toDateString()
+        if (lastAt && lastAt.toDateString() === today) {
+          console.log(`[Scheduler] ⏭ uid ${uid} — já enviado hoje (modo normal)`)
+          continue
+        }
+
+        const msg = buildReminderMessage(pending, 1, false)
+        await sendMessage(whatsapp.phone, msg)
+        await saveLastReminderAt(uid)
+        console.log(`[Scheduler] ✅ Lembrete para uid ${uid}`)
       }
 
-      const msg = buildReminderMessage(pending, attempt, whatsapp.encheSaco ?? false)
-      await sendMessage(whatsapp.phone, msg)
     } catch (e) {
       console.error(`[Scheduler] ❌ uid ${uid}:`, e)
     }
@@ -129,7 +149,6 @@ async function runWeeklySummaries(): Promise<void> {
     if (!whatsapp.weeklySummary) continue
     try {
       const summary = await getWeeklySummary(uid, weekId)
-      // Só envia resumo se tiver ao menos 1 drop registrado
       if (summary.totalDrops === 0) continue
       await sendMessage(whatsapp.phone, buildWeeklySummaryMessage(summary))
       console.log(`[Scheduler] ✅ Resumo semanal para uid ${uid}`)
@@ -142,29 +161,17 @@ async function runWeeklySummaries(): Promise<void> {
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
 export function startScheduler(): void {
-  // Verifica fila de notificações a cada minuto
+  // Fila de notificações: a cada minuto
   cron.schedule('* * * * *', () => processQueue(), { timezone: 'UTC' })
+
+  // Lembretes: a cada 30 min (lógica interna controla intervalo por usuário)
+  cron.schedule('*/30 * * * *', () => runReminders(), { timezone: 'UTC' })
 
   // Resumo semanal: terça 08h BRT = 11h UTC
   cron.schedule('0 11 * * 2', () => runWeeklySummaries(), { timezone: 'UTC' })
 
-  // Lembretes de drop:
-  // Terça  10h BRT = 13h UTC (1ª tentativa — drops acabaram de resetar)
-  cron.schedule('0 13 * * 2', () => runReminders(1), { timezone: 'UTC' })
-  // Terça  18h BRT = 21h UTC (2ª — ainda tem tempo)
-  cron.schedule('0 21 * * 2', () => runReminders(2), { timezone: 'UTC' })
-  // Quarta 12h BRT = 15h UTC (3ª — urgência)
-  cron.schedule('0 15 * * 3', () => runReminders(3), { timezone: 'UTC' })
-  // Quinta 10h BRT = 13h UTC (4ª — última chamada, modo enche saco vai longe)
-  cron.schedule('0 13 * * 4', () => runReminders(4), { timezone: 'UTC' })
-  // Sexta  10h BRT = 13h UTC (5ª — só modo enche saco)
-  cron.schedule('0 13 * * 5', () => runReminders(5), { timezone: 'UTC' })
-
   console.log('[Scheduler] ✅ Crons ativos:')
-  console.log('  • A cada minuto   — processa fila (testes, confirmações)')
-  console.log('  • Terça  08h BRT  — resumo semanal')
-  console.log('  • Terça  10h/18h  — lembretes (1ª e 2ª tentativa)')
-  console.log('  • Quarta 12h      — lembrete (3ª tentativa)')
-  console.log('  • Quinta 10h      — lembrete (4ª — última chamada)')
-  console.log('  • Sexta  10h      — lembrete (5ª — só modo enche saco)')
+  console.log('  • A cada minuto    — fila (testes, drops registrados)')
+  console.log('  • A cada 30 min    — lembretes (intervalo por usuário)')
+  console.log('  • Terça 08h BRT    — resumo semanal')
 }
