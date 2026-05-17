@@ -194,6 +194,22 @@ export function buildDropRegisteredMessage(accountName: string, dropNumber: numb
   return pick(msgs)
 }
 
+// ─── Boas-vindas modo xingamentos ────────────────────────────────────────────
+
+export function buildXingamentosWelcomeMessage(): string {
+  return (
+    `🤬 *ATENÇÃO SEU MERDA!*\n\n` +
+    `Eae, só passando pra te avisar que o *Modo Xingamentos* tá ATIVADO, caralho.\n\n` +
+    `A partir de agora, toda vez que você for um vagabundo e esquecer de farmar, ` +
+    `eu vou aparecer aqui pra te encher o saco com palavrão e tudo.\n\n` +
+    `Quer desativar? Vai lá nas configurações, filho da puta. ` +
+    `Mas depois não adianta chorar que o bot ficou grosseiro — ` +
+    `*você mesmo ativou essa merda.*\n\n` +
+    `Agora vai farmar seu lerdo, e não me faça ter que te xingar hoje não.\n\n` +
+    `— _LootFlow Bot, com muito amor_ 💀`
+  )
+}
+
 export function buildHelpMessage(): string {
   return (
     `🎮 *LootFlow Bot* — Comandos\n\n` +

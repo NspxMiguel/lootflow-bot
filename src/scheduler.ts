@@ -5,7 +5,7 @@ import {
 } from './firestore'
 import { getCurrentWeekId, isInQuietHours } from './checker'
 import {
-  buildReminderMessage, buildWeeklySummaryMessage, buildTestMessage, buildAllDoneXingamentoMessage,
+  buildReminderMessage, buildWeeklySummaryMessage, buildTestMessage, buildAllDoneXingamentoMessage, buildXingamentosWelcomeMessage,
 } from './messages'
 import { sendMessage, isClientReady } from './whatsapp'
 import { config } from './config'
@@ -22,13 +22,16 @@ async function processQueue(): Promise<void> {
 
   for (const item of items) {
     try {
-      if (item.type === 'test' || item.type === 'force_reminder') {
+      if (item.type === 'test' || item.type === 'force_reminder' || item.type === 'xingamentos_welcome') {
         const wa = await getUserWASettings(item.uid)
         if (!wa) {
           console.warn(`[Queue] ⚠️ ${item.type} ignorado — uid ${item.uid} sem número`)
           continue
         }
-        if (item.type === 'test') {
+        if (item.type === 'xingamentos_welcome') {
+          await sendMessage(wa.phone, buildXingamentosWelcomeMessage())
+          console.log(`[Queue] 🤬 Boas-vindas xingamentos para uid ${item.uid} (${wa.phone})`)
+        } else if (item.type === 'test') {
           await sendMessage(wa.phone, buildTestMessage())
           console.log(`[Queue] ✅ Teste enviado para uid ${item.uid} (${wa.phone})`)
         } else {
