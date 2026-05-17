@@ -5,7 +5,7 @@ import {
 } from './firestore'
 import { getCurrentWeekId, isInQuietHours } from './checker'
 import {
-  buildReminderMessage, buildWeeklySummaryMessage, buildTestMessage,
+  buildReminderMessage, buildWeeklySummaryMessage, buildTestMessage, buildAllDoneXingamentoMessage,
 } from './messages'
 import { sendMessage, isClientReady } from './whatsapp'
 import { config } from './config'
@@ -90,7 +90,21 @@ async function runReminders(): Promise<void> {
 
       // Drops pendentes?
       const pending = await getPendingAccounts(uid, weekId)
-      if (pending.length === 0) continue
+
+      // Se tudo farmado e modo xingamentos ativo, manda elogio (só uma vez por dia)
+      if (pending.length === 0) {
+        if (whatsapp.xingamentos) {
+          const lastAt = whatsapp.lastReminderAt ? new Date(whatsapp.lastReminderAt) : null
+          const today = now.toDateString()
+          if (!lastAt || lastAt.toDateString() !== today) {
+            const summary = await getWeeklySummary(uid, weekId)
+            await sendMessage(whatsapp.phone, buildAllDoneXingamentoMessage(summary.totalCashout))
+            await saveLastReminderAt(uid)
+            console.log(`[Scheduler] 🎉 Elogio xingamento para uid ${uid}`)
+          }
+        }
+        continue
+      }
 
       if (whatsapp.encheSaco) {
         // Modo enche o saco: respeita o intervalo configurado

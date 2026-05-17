@@ -57,7 +57,7 @@ const REMINDERS_XINGAMENTOS = [
   (lines: string, n: number) =>
     `😡 *FALTANDO ${n} CONTA${n > 1 ? 'S' : ''} PRA FARMAR SEU LERDO DO CARALHO!*\n\nTu quer ficar sem? Então vai pegar agora seu vagabundo:\n${lines}\n\n👉 ${LINK}${PARAR}`,
   (lines: string, n: number) =>
-    `🤡 *RELATÓRIO DO INÚTIL DA SEMANA:*\n\nContas farmadas: ❌\nContas faltando: ${n}\nMotivo: preguiça\nPrejuízo: dinheiro jogado fora\n\n${lines}\n\nConserta isso AGORA: ${LINK}${PARAR}`,
+    `🤡 *RELATÓRIO DO INÚTIL DA SEMANA:*\n\nFarmou em todas as contas?: ❌\nContas faltando: ${n}\nMotivo: preguiça\nPrejuízo: dinheiro jogado fora\n\nConserta isso AGORA:\n${lines}\n\n👉 ${LINK}${PARAR}`,
   (lines: string, n: number) =>
     `🔥 *VAI TOMAR NO CU SEU ESQUECIDO!*\n\nPega os drops das ${n} conta${n > 1 ? 's' : ''} antes que expire, porra:\n${lines}\n\n👉 ${LINK}${PARAR}`,
   (lines: string, n: number) =>
@@ -136,6 +136,20 @@ export function buildWeeklySummaryMessage(data: WeeklySummaryData): string {
     `\n💰 Total: *R$ ${data.totalCashout.toFixed(2)}* em ${data.totalDrops} drop${data.totalDrops !== 1 ? 's' : ''}\n\n` +
     `👉 https://spxmiguel.github.io/LootFlow`
   )
+}
+
+// ─── Elogio com xingamento (semana completa, modo xingamentos ativo) ──────────
+
+export function buildAllDoneXingamentoMessage(totalCashout: number): string {
+  const msgs = [
+    `✅ *FINALMENTE SEU VAGABUNDO!*\n\nFarmou tudo essa semana. Tá de parabéns, seu preguiçoso. Só demorou né?\n\n💰 Cashout da semana: *R$ ${totalCashout.toFixed(2)}*\n\nAgora descansa que semana que vem eu tô aqui de novo pra te encher o saco 😘`,
+    `🏆 *OLHA SÓ, FARMOU TUDO!*\n\nNem acreditei. Achei que ia ter que te xingar até amanhã.\n\n💰 Ganhaste: *R$ ${totalCashout.toFixed(2)}*\n\nBom trabalho, seu lerdo. Semana que vem não esquece de novo não, tá?`,
+    `🎉 *EBA, SEU INÚTIL VIROU ÚTIL!*\n\nTodas as contas farmadas. Isso aí meu filho.\n\n💰 *R$ ${totalCashout.toFixed(2)}* no bolso\n\nQuem diria que você conseguia né? Semana que vem repete isso 👏`,
+    `💰 *MISSÃO CUMPRIDA, SEU MANÉ!*\n\nFez o que tinha que fazer. Demorou, mas foi.\n\n*R$ ${totalCashout.toFixed(2)}* garantido essa semana.\n\nSe não fosse eu aqui te enchendo o saco você ia perder tudo isso, tá ligado? De nada 😂`,
+    `✅ *RAPAZ, FARMOU TUDO!*\n\nTô orgulhoso. Com raiva, mas orgulhoso.\n\n💰 *R$ ${totalCashout.toFixed(2)}* — não é muito não mas é seu\n\nDescansa aí vagabundo, você merece. Até semana que vem 👊`,
+    `🤩 *RELATÓRIO DO INÚTIL DA SEMANA:*\n\nFarmou em todas as contas?: ✅\nContas faltando: 0\nMotivo do sucesso: eu ficando no seu ouvido\nGanhou: *R$ ${totalCashout.toFixed(2)}*\n\nDe nada. Semana que vem tô aqui de novo 😇`,
+  ]
+  return pick(msgs)
 }
 
 // ─── Mensagem de teste ────────────────────────────────────────────────────────
