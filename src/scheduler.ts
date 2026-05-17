@@ -22,15 +22,27 @@ async function processQueue(): Promise<void> {
 
   for (const item of items) {
     try {
-      if (item.type === 'test') {
-        // Teste: busca settings diretamente pelo uid, sem exigir enabled=true
+      if (item.type === 'test' || item.type === 'force_reminder') {
+        // test / force_reminder: sem exigir enabled=true, sem checar dia/horário
         const wa = await getUserWASettings(item.uid)
         if (!wa) {
-          console.warn(`[Queue] ⚠️ Teste ignorado — uid ${item.uid} sem número configurado`)
+          console.warn(`[Queue] ⚠️ ${item.type} ignorado — uid ${item.uid} sem número`)
           continue
         }
-        await sendMessage(wa.phone, buildTestMessage())
-        console.log(`[Queue] ✅ Teste enviado para uid ${item.uid} (${wa.phone})`)
+        if (item.type === 'test') {
+          await sendMessage(wa.phone, buildTestMessage())
+          console.log(`[Queue] ✅ Teste enviado para uid ${item.uid} (${wa.phone})`)
+        } else {
+          // force_reminder: mostra lembrete real com drops pendentes
+          const weekId = getCurrentWeekId()
+          const pending = await getPendingAccounts(item.uid, weekId)
+          if (pending.length === 0) {
+            await sendMessage(wa.phone, `🎮 *LootFlow* — Simulação de lembrete\n\n✅ Nenhum drop pendente esta semana! Tudo registrado.`)
+          } else {
+            await sendMessage(wa.phone, buildReminderMessage(pending, 1, wa.encheSaco ?? false))
+          }
+          console.log(`[Queue] ✅ Lembrete forçado para uid ${item.uid} (${wa.phone})`)
+        }
 
       } else {
         // Outros tipos: requer whatsapp.enabled = true
