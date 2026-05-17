@@ -84,6 +84,54 @@ export function buildTestMessage(): string {
   )
 }
 
+// ─── Status de drops ──────────────────────────────────────────────────────────
+
+export function buildDropStatusMessage(accounts: Array<{ name: string; drops: number; cashout: number }>): string {
+  if (accounts.length === 0) {
+    return `🎮 *LootFlow* — Status\n\nNenhuma conta ativa cadastrada.\n\n👉 https://spxmiguel.github.io/LootFlow`
+  }
+  const lines = accounts.map(a => {
+    const bar = a.drops >= 2 ? '✅' : a.drops === 1 ? '🟡' : '❌'
+    return `${bar} ${a.name}: ${a.drops}/2 drops · R$ ${a.cashout.toFixed(2)}`
+  }).join('\n')
+
+  const allDone = accounts.every(a => a.drops >= 2)
+  const footer = allDone ? '\n\n🏆 Semana completa!' : '\n\n_Responda_ *AJUDA* _para ver comandos._'
+  return `🎮 *LootFlow* — Drops desta semana\n\n${lines}${footer}`
+}
+
+export function buildDropRegisteredMessage(accountName: string, dropNumber: number, steamValue: number): string {
+  return (
+    `✅ *Drop registrado!*\n\n` +
+    `• Conta: *${accountName}*\n` +
+    `• Drop nº ${dropNumber} desta semana\n` +
+    `• Valor Steam: R$ ${steamValue.toFixed(2)}\n` +
+    `• Estimativa cashout: R$ ${(steamValue * 0.85).toFixed(2)}\n\n` +
+    `_Responda_ *STATUS* _para ver todos os drops._`
+  )
+}
+
+export function buildHelpMessage(): string {
+  return (
+    `🎮 *LootFlow Bot* — Comandos\n\n` +
+    `*STATUS* — ver drops desta semana\n` +
+    `*DROP [conta] [valor]* — registrar drop\n` +
+    `  Ex: _DROP AKM 15.50_\n` +
+    `  Ex: _DROP servente 8.90_\n` +
+    `*PARAR* — desativar lembretes\n\n` +
+    `👉 https://spxmiguel.github.io/LootFlow`
+  )
+}
+
+export function buildAccountNotFoundMessage(query: string, accounts: string[]): string {
+  const list = accounts.map(a => `• ${a}`).join('\n')
+  return (
+    `❌ Conta "*${query}*" não encontrada.\n\n` +
+    `Suas contas ativas:\n${list}\n\n` +
+    `Use parte do nome. Ex: _DROP AKM 15.50_`
+  )
+}
+
 // ─── Stop ─────────────────────────────────────────────────────────────────────
 
 export function buildStopConfirmMessage(): string {
