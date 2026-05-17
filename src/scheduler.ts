@@ -22,13 +22,17 @@ async function processQueue(): Promise<void> {
 
   for (const item of items) {
     try {
-      if (item.type === 'test' || item.type === 'force_reminder' || item.type === 'xingamentos_welcome') {
+      if (['test','force_reminder','xingamentos_welcome','send_verify_code'].includes(item.type)) {
         const wa = await getUserWASettings(item.uid)
         if (!wa) {
           console.warn(`[Queue] ⚠️ ${item.type} ignorado — uid ${item.uid} sem número`)
           continue
         }
-        if (item.type === 'xingamentos_welcome') {
+        if (item.type === 'send_verify_code') {
+          if (!wa.verifyCode) { console.warn(`[Queue] ⚠️ send_verify_code sem código para uid ${item.uid}`); continue }
+          await sendMessage(wa.phone, `🎮 *LootFlow* — Verificação de número\n\nSeu código de verificação:\n\n*${wa.verifyCode}*\n\nDigite esse código no LootFlow → Configurações → Notificações WhatsApp.\n\n_O código expira quando você verificar._`)
+          console.log(`[Queue] ✅ Código de verificação enviado para uid ${item.uid} (${wa.phone})`)
+        } else if (item.type === 'xingamentos_welcome') {
           await sendMessage(wa.phone, buildXingamentosWelcomeMessage())
           console.log(`[Queue] 🤬 Boas-vindas xingamentos para uid ${item.uid} (${wa.phone})`)
         } else if (item.type === 'test') {
