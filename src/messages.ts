@@ -34,23 +34,50 @@ const REMINDERS_ENCHESACO = [
     `🎮 *LootFlow* — acorda\n\n${lines}\n\nEsse drop não vai se registrar sozinho né 😒\nhttps://spxmiguel.github.io/LootFlow\n\n_Responda_ *PARAR* _para desativar._`,
 ]
 
+const LINK = 'https://spxmiguel.github.io/LootFlow'
+const PARAR = `\n\n_Responda_ *PARAR* _pra me calar._`
+
 const REMINDERS_XINGAMENTOS = [
+  (lines: string, n: number) =>
+    `🤬 *BORA SEU VAGABUNDO!*\n\nQUEM GANHA DINHEIRO NA CAMA É PUTA! FALTA FARMAR ${n} CONTA${n > 1 ? 'S' : ''} AINDA SEU MERDA, PARA DE SER LERDO E VAI LOGO:\n${lines}\n\n👉 ${LINK}${PARAR}`,
+  (lines: string, n: number) =>
+    `😡 *ACORDA PORRA!*\n\nDROP SEMANAL LIBERADO SEU INÚTIL DO CARALHO. FALTA ${n} CONTA${n > 1 ? 'S' : ''} PRA FARMAR, VAI PEGAR ANTES QUE ACABE SEU PREGUIÇOSO:\n${lines}\n\n👉 ${LINK}${PARAR}`,
+  (lines: string, n: number) =>
+    `🔥 *EI SEU FILHO DA PUTA!*\n\nOs drops tão te esperando em ${n} conta${n > 1 ? 's' : ''}. Tu vai deixar passar de novo?\n${lines}\n\nBORA CARALHO: ${LINK}${PARAR}`,
+  (lines: string, n: number) =>
+    `💢 *FALTA FARMAR ${n} CONTA${n > 1 ? 'S' : ''} SEU PREGUIÇOSO DE MERDA!*\n\n${lines}\n\nLEVANTA ESSA BUNDA E REGISTRA LOGO, SENÃO TU CHORA DEPOIS:\n👉 ${LINK}${PARAR}`,
+  (lines: string, n: number) =>
+    `😤 *DROP SEMANAL LIBERADO SEU MERDA!*\n\n${n} conta${n > 1 ? 's' : ''} esperando, PARA DE SER UM ESQUECIDO E VAI PEGAR AGORA:\n${lines}\n\n👉 ${LINK}${PARAR}`,
+  (lines: string, n: number) =>
+    `🤦 *PORRA, TÁ DORMINDO NO PONTO?*\n\nVai pegar os drops das ${n} conta${n > 1 ? 's' : ''} seu animal, senão vai ficar só na vontade de novo:\n${lines}\n\n👉 ${LINK}${PARAR}`,
+  (lines: string, n: number) =>
+    `💀 *BORA SEU PUTO, PARA DE ENROLAÇÃO!*\n\nOs drops de ${n} conta${n > 1 ? 's' : ''} tão fresquinhos te esperando, não seja um inútil:\n${lines}\n\n👉 ${LINK}${PARAR}`,
+  (lines: string, n: number) =>
+    `🚨 *ACORDA SEU FILHO DA PUTA!*\n\nJá tá na hora do drop semanal, ${n} conta${n > 1 ? 's' : ''} pra farmar, mexe essa bunda LOGO CARALHO:\n${lines}\n\n👉 ${LINK}${PARAR}`,
+  (lines: string, n: number) =>
+    `😡 *FALTANDO ${n} CONTA${n > 1 ? 'S' : ''} PRA FARMAR SEU LERDO DO CARALHO!*\n\nTu quer ficar sem? Então vai pegar agora seu vagabundo:\n${lines}\n\n👉 ${LINK}${PARAR}`,
+  (lines: string, n: number) =>
+    `🤡 *RELATÓRIO DO INÚTIL DA SEMANA:*\n\nContas farmadas: ❌\nContas faltando: ${n}\nMotivo: preguiça\nPrejuízo: dinheiro jogado fora\n\n${lines}\n\nConserta isso AGORA: ${LINK}${PARAR}`,
+  (lines: string, n: number) =>
+    `🔥 *VAI TOMAR NO CU SEU ESQUECIDO!*\n\nPega os drops das ${n} conta${n > 1 ? 's' : ''} antes que expire, porra:\n${lines}\n\n👉 ${LINK}${PARAR}`,
+  (lines: string, n: number) =>
+    `💢 *BORA PORRA!*\n\nOs drops de ${n} conta${n > 1 ? 's' : ''} não vão vir sozinhos. Tá esperando o quê, seu inútil? MEXE ESSA BUNDA AGORA:\n${lines}\n\n👉 ${LINK}${PARAR}`,
+  (lines: string, n: number) =>
+    `😤 *DROP SEMANAL SEU FILHO DA PUTA!*\n\nNão me faz te chamar de novo não, vai logo farmar essa${n > 1 ? 's' : ''} ${n} conta${n > 1 ? 's' : ''}:\n${lines}\n\n👉 ${LINK}${PARAR}`,
   (lines: string) =>
-    `🤬 *LootFlow* — QUE PREGUIÇA MANO\n\n${lines}\n\nAbre o site AGORA e registra isso:\nhttps://spxmiguel.github.io/LootFlow\n\n_Responda_ *PARAR* _pra eu parar de te encher o saco._`,
+    `🤬 *ACORDA SEU PREGUIÇOSO DO CARALHO!*\n\nOs drops não caem do céu, levanta e registra:\n${lines}\n\n👉 ${LINK}${PARAR}`,
+  (lines: string, n: number) =>
+    `💀 *PARA DE SER UM FRACASSADO!*\n\n${n} conta${n > 1 ? 's' : ''} esperando, vai garantir seus drops agora:\n${lines}\n\n👉 ${LINK}${PARAR}`,
   (lines: string) =>
-    `😡 *LootFlow* — para de ser vagabundo\n\nVocê deixou dinheiro na mesa de novo:\n${lines}\n\nVAI REGISTRAR: https://spxmiguel.github.io/LootFlow\n\n_Responda_ *PARAR* _pra me calar._`,
-  (lines: string) =>
-    `💢 *LootFlow* — tô de saco cheio\n\n${lines}\n\nFaz o favor de abrir o site e registrar isso antes que eu enlouqueça:\nhttps://spxmiguel.github.io/LootFlow\n\n_Responda_ *PARAR* _se não aguenta mais._`,
-  (lines: string) =>
-    `🤦 *LootFlow* — PELO AMOR DE DEUS\n\n${lines}\n\nFicou rico já pra tá jogando dinheiro fora assim??\nhttps://spxmiguel.github.io/LootFlow\n\n_Responda_ *PARAR* _pra desativar._`,
-  (lines: string) =>
-    `😤 *LootFlow* — olha aqui\n\nQUANTAS VEZES PRECISO FALAR:\n${lines}\n\nABRE O SITE E REGISTRA:\nhttps://spxmiguel.github.io/LootFlow\n\n_Responda_ *PARAR* _se tá com raiva de mim._`,
-  (lines: string) =>
-    `🔥 *LootFlow* — você me irrita\n\nEsse drop tá esperando desde não sei quando:\n${lines}\n\nPara de me fazer perder tempo e registra logo:\nhttps://spxmiguel.github.io/LootFlow\n\n_Responda_ *PARAR* _pra eu me acalmar._`,
-  (lines: string) =>
-    `💀 *LootFlow* — vai se f*der\n\n${lines}\n\nMas antes de ir, registra o drop:\nhttps://spxmiguel.github.io/LootFlow\n\n_Responda_ *PARAR* _pra desativar._`,
-  (lines: string) =>
-    `🤡 *LootFlow* — palhacinho\n\nDinheiro na conta: R$ 0,00\nDrop registrado: não\nMotivo: preguiça\n\n${lines}\n\nConserta isso: https://spxmiguel.github.io/LootFlow\n\n_Responda_ *PARAR* _se não aguenta._`,
+    `🚨 *PORRA, OS DROPS TÃO TE CHAMANDO!*\n\nNão seja um mané, vai farmar logo caralho:\n${lines}\n\n👉 ${LINK}${PARAR}`,
+  (lines: string, n: number) =>
+    `😡 *BORA SEU VADIÃO!*\n\n${n} conta${n > 1 ? 's' : ''} pra farmar essa semana. Vai ou vai continuar perdendo dinheiro?\n${lines}\n\n👉 ${LINK}${PARAR}`,
+  (lines: string, n: number) =>
+    `🤦 *EI SEU INÚTIL, PARA DE COISA!*\n\nVai pegar os drops das ${n} conta${n > 1 ? 's' : ''} senão tu vai se foder de novo essa semana:\n${lines}\n\n👉 ${LINK}${PARAR}`,
+  (lines: string, n: number) =>
+    `🔥 *DROP SEMANAL LIBERADO SEU ANIMAL!*\n\n${n} conta${n > 1 ? 's' : ''} te esperando, mexe essa porra logo antes que acabe, vagabundo:\n${lines}\n\n👉 ${LINK}${PARAR}`,
+  (lines: string, n: number) =>
+    `💢 *ÚLTIMA CHAMADA SEU FILHO DA PUTA!*\n\nFarma essa${n > 1 ? 's' : ''} ${n} conta${n > 1 ? 's' : ''} agora ou continua sendo o rei dos esquecidos:\n${lines}\n\n👉 ${LINK}${PARAR}`,
 ]
 
 export function buildReminderMessage(
@@ -65,7 +92,7 @@ export function buildReminderMessage(
 
   if (xingamentos) {
     const fn = pick(REMINDERS_XINGAMENTOS)
-    return fn(accountLines)
+    return fn(accountLines, pending.length)
   }
 
   if (encheSaco) {
