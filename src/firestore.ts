@@ -27,6 +27,7 @@ export interface WhatsAppSettings {
   encheSaco: boolean
   encheSacoInterval: number   // minutos entre lembretes (30, 60, 90, 120...)
   weeklySummary: boolean
+  xingamentos: boolean        // modo palavrão
   lastReminderAt?: string     // ISO timestamp do último lembrete enviado
 }
 

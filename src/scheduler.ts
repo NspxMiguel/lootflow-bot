@@ -110,7 +110,7 @@ async function runReminders(): Promise<void> {
         const msSinceDay = now.getTime() - startOfDay.getTime()
         const attempt = Math.floor(msSinceDay / intervalMs) + 1
 
-        const msg = buildReminderMessage(pending, attempt, true)
+        const msg = buildReminderMessage(pending, attempt, true, whatsapp.xingamentos ?? false)
         await sendMessage(whatsapp.phone, msg)
         await saveLastReminderAt(uid)
         console.log(`[Scheduler] 🔔 Enche saco tentativa ${attempt} para uid ${uid}`)
@@ -124,7 +124,7 @@ async function runReminders(): Promise<void> {
           continue
         }
 
-        const msg = buildReminderMessage(pending, 1, false)
+        const msg = buildReminderMessage(pending, 1, false, whatsapp.xingamentos ?? false)
         await sendMessage(whatsapp.phone, msg)
         await saveLastReminderAt(uid)
         console.log(`[Scheduler] ✅ Lembrete para uid ${uid}`)
