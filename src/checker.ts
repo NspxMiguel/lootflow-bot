@@ -3,6 +3,8 @@
  * CS2 reseta drops toda terça-feira.
  */
 
+import type { WhatsAppSettings } from './firestore'
+
 export function getWeekIdForDate(date: Date = new Date()): string {
   const d = new Date(date)
   const day = d.getDay() // 0=Sun, 1=Mon, 2=Tue, ...
@@ -43,10 +45,51 @@ export function isInQuietHours(
   const endMin = eh * 60 + em
 
   if (startMin <= endMin) {
-    // Janela dentro do mesmo dia: ex 09:00 → 18:00
     return nowMin >= startMin && nowMin < endMin
   } else {
-    // Janela cruzando meia-noite: ex 22:00 → 08:00
     return nowMin >= startMin || nowMin < endMin
   }
+}
+
+/**
+ * Verifica se o bot deve enviar mensagem agora para este usuário.
+ * Suporta o novo sistema de schedule por dia E o legado (remindDays + quietHours).
+ */
+export function isActiveForSchedule(
+  whatsapp: WhatsAppSettings,
+  now: Date = new Date(),
+  tzOffset: number = -3,
+): boolean {
+  // Converte para horário local (BRT) antes de checar o dia da semana
+  const localMs = now.getTime() + tzOffset * 3600000
+  const local = new Date(localMs)
+  const day = local.getUTCDay()
+  const h = local.getUTCHours()
+  const m = local.getUTCMinutes()
+  const nowMin = h * 60 + m
+
+  // ── Novo sistema: schedule por dia ───────────────────────────────────────
+  if (whatsapp.schedule && Object.keys(whatsapp.schedule).length > 0) {
+    const dayConf = whatsapp.schedule[day]
+    if (!dayConf?.enabled) return false
+
+    const [sh, sm] = dayConf.activeStart.split(':').map(Number)
+    const [eh, em] = dayConf.activeEnd.split(':').map(Number)
+    const startMin = sh * 60 + sm
+    const endMin = eh * 60 + em
+
+    if (startMin <= endMin) {
+      return nowMin >= startMin && nowMin < endMin
+    }
+    return nowMin >= startMin || nowMin < endMin
+  }
+
+  // ── Legacy: remindDays + quietHours ──────────────────────────────────────
+  const remindDays = whatsapp.remindDays ?? [2, 3, 4]
+  if (!remindDays.includes(day)) return false
+  return !isInQuietHours(
+    whatsapp.quietStart ?? '22:00',
+    whatsapp.quietEnd ?? '08:00',
+    tzOffset,
+  )
 }

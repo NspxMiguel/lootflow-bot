@@ -41,13 +41,13 @@ const REMINDERS_XINGAMENTOS = [
   (lines: string, n: number) =>
     `🤬 *BORA SEU VAGABUNDO!*\n\nQUEM GANHA DINHEIRO NA CAMA É PUTA! FALTA FARMAR ${n} CONTA${n > 1 ? 'S' : ''} AINDA SEU MERDA, PARA DE SER LERDO E VAI LOGO:\n${lines}\n\n👉 ${LINK}${PARAR}`,
   (lines: string, n: number) =>
-    `😡 *ACORDA PORRA!*\n\nDROP SEMANAL LIBERADO SEU INÚTIL DO CARALHO. FALTA ${n} CONTA${n > 1 ? 'S' : ''} PRA FARMAR, VAI PEGAR ANTES QUE ACABE SEU PREGUIÇOSO:\n${lines}\n\n👉 ${LINK}${PARAR}`,
+    `😡 *ACORDA PORRA!*\n\nOS DROPS TÃO ESPERANDO E VOCÊ AÍ PARADO. FALTA ${n} CONTA${n > 1 ? 'S' : ''} PRA FARMAR, MEXE ESSA BUNDA LOGO SEU PREGUIÇOSO:\n${lines}\n\n👉 ${LINK}${PARAR}`,
   (lines: string, n: number) =>
     `🔥 *EI SEU FILHO DA PUTA!*\n\nOs drops tão te esperando em ${n} conta${n > 1 ? 's' : ''}. Tu vai deixar passar de novo?\n${lines}\n\nBORA CARALHO: ${LINK}${PARAR}`,
   (lines: string, n: number) =>
     `💢 *FALTA FARMAR ${n} CONTA${n > 1 ? 'S' : ''} SEU PREGUIÇOSO DE MERDA!*\n\n${lines}\n\nLEVANTA ESSA BUNDA E REGISTRA LOGO, SENÃO TU CHORA DEPOIS:\n👉 ${LINK}${PARAR}`,
   (lines: string, n: number) =>
-    `😤 *DROP SEMANAL LIBERADO SEU MERDA!*\n\n${n} conta${n > 1 ? 's' : ''} esperando, PARA DE SER UM ESQUECIDO E VAI PEGAR AGORA:\n${lines}\n\n👉 ${LINK}${PARAR}`,
+    `😤 *QUE É ISSO SEU MERDA!*\n\n${n} conta${n > 1 ? 's' : ''} esperando, PARA DE SER UM ESQUECIDO E VAI PEGAR AGORA:\n${lines}\n\n👉 ${LINK}${PARAR}`,
   (lines: string, n: number) =>
     `🤦 *PORRA, TÁ DORMINDO NO PONTO?*\n\nVai pegar os drops das ${n} conta${n > 1 ? 's' : ''} seu animal, senão vai ficar só na vontade de novo:\n${lines}\n\n👉 ${LINK}${PARAR}`,
   (lines: string, n: number) =>
@@ -71,11 +71,11 @@ const REMINDERS_XINGAMENTOS = [
   (lines: string) =>
     `🚨 *PORRA, OS DROPS TÃO TE CHAMANDO!*\n\nNão seja um mané, vai farmar logo caralho:\n${lines}\n\n👉 ${LINK}${PARAR}`,
   (lines: string, n: number) =>
-    `😡 *BORA SEU VADIÃO!*\n\n${n} conta${n > 1 ? 's' : ''} pra farmar essa semana. Vai ou vai continuar perdendo dinheiro?\n${lines}\n\n👉 ${LINK}${PARAR}`,
+    `😡 *BORA SEU MOLEZA DE MERDA!*\n\n${n} conta${n > 1 ? 's' : ''} pra farmar essa semana. Vai ou vai continuar perdendo dinheiro?\n${lines}\n\n👉 ${LINK}${PARAR}`,
   (lines: string, n: number) =>
     `🤦 *EI SEU INÚTIL, PARA DE COISA!*\n\nVai pegar os drops das ${n} conta${n > 1 ? 's' : ''} senão tu vai se foder de novo essa semana:\n${lines}\n\n👉 ${LINK}${PARAR}`,
   (lines: string, n: number) =>
-    `🔥 *DROP SEMANAL LIBERADO SEU ANIMAL!*\n\n${n} conta${n > 1 ? 's' : ''} te esperando, mexe essa porra logo antes que acabe, vagabundo:\n${lines}\n\n👉 ${LINK}${PARAR}`,
+    `🔥 *OI SEU ANIMAL, TUDO BEM?*\n\n${n} conta${n > 1 ? 's' : ''} te esperando, mexe essa porra logo antes da semana acabar, vagabundo:\n${lines}\n\n👉 ${LINK}${PARAR}`,
   (lines: string, n: number) =>
     `💢 *ÚLTIMA CHAMADA SEU FILHO DA PUTA!*\n\nFarma essa${n > 1 ? 's' : ''} ${n} conta${n > 1 ? 's' : ''} agora ou continua sendo o rei dos esquecidos:\n${lines}\n\n👉 ${LINK}${PARAR}`,
 ]

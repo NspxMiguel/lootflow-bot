@@ -18,19 +18,28 @@ const db = getFirestore()
 
 // ─── Types (espelham o frontend) ─────────────────────────────────────────────
 
+interface DaySchedule {
+  enabled: boolean
+  activeStart: string
+  activeEnd: string
+}
+
 export interface WhatsAppSettings {
   phone: string
   enabled: boolean
-  quietStart: string
-  quietEnd: string
-  remindDays: number[]
+  // Novo: schedule por dia
+  schedule?: { [day: number]: DaySchedule }
+  // Legacy
+  quietStart?: string
+  quietEnd?: string
+  remindDays?: number[]
   encheSaco: boolean
-  encheSacoInterval: number   // minutos entre lembretes (30, 60, 90, 120...)
+  encheSacoInterval: number
   weeklySummary: boolean
-  xingamentos: boolean        // modo palavrão
-  verified?: boolean          // true = número confirmado via código
-  verifyCode?: string         // código de 6 dígitos para verificação
-  lastReminderAt?: string     // ISO timestamp do último lembrete enviado
+  xingamentos: boolean
+  verified?: boolean
+  verifyCode?: string
+  lastReminderAt?: string
 }
 
 interface AppSettings {

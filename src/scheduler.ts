@@ -3,7 +3,7 @@ import {
   getAllUsersWithWA, getPendingAccounts, getWeeklySummary, drainNotificationQueue,
   getUserWASettings, saveLastReminderAt,
 } from './firestore'
-import { getCurrentWeekId, isInQuietHours } from './checker'
+import { getCurrentWeekId, isActiveForSchedule } from './checker'
 import {
   buildReminderMessage, buildWeeklySummaryMessage, buildTestMessage, buildAllDoneXingamentoMessage, buildXingamentosWelcomeMessage,
 } from './messages'
@@ -89,11 +89,8 @@ async function runReminders(): Promise<void> {
 
   for (const { uid, whatsapp } of users) {
     try {
-      // Dia de lembrete?
-      if (!whatsapp.remindDays.includes(now.getDay())) continue
-
-      // Horário de silêncio?
-      if (isInQuietHours(whatsapp.quietStart, whatsapp.quietEnd, config.tzOffset)) continue
+      // Dia e horário — usa schedule por dia (ou legacy remindDays+quietHours)
+      if (!isActiveForSchedule(whatsapp, now, config.tzOffset)) continue
 
       // Drops pendentes?
       const pending = await getPendingAccounts(uid, weekId)
