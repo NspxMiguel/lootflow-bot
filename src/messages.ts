@@ -85,14 +85,21 @@ export function buildReminderMessage(
   attempt: number,
   encheSaco: boolean,
   xingamentos = false,
+  enabledXingamentos?: number[],
 ): string {
   const accountLines = pending
     .map(a => `• ${a.name} — ${a.dropsRegistered}/2 drops`)
     .join('\n')
 
   if (xingamentos) {
-    const fn = pick(REMINDERS_XINGAMENTOS)
-    return fn(accountLines, pending.length)
+    const pool = enabledXingamentos != null
+      ? REMINDERS_XINGAMENTOS.filter((_, i) => enabledXingamentos.includes(i))
+      : REMINDERS_XINGAMENTOS
+    // fallback to encheSaco if all disabled
+    if (pool.length > 0) {
+      const fn = pick(pool)
+      return fn(accountLines, pending.length)
+    }
   }
 
   if (encheSaco) {

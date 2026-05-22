@@ -37,6 +37,7 @@ export interface WhatsAppSettings {
   encheSacoInterval: number
   weeklySummary: boolean
   xingamentos: boolean
+  enabledXingamentos?: number[]
   verified?: boolean
   verifyCode?: string
   lastReminderAt?: string
