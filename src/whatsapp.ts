@@ -146,14 +146,31 @@ export function initWhatsApp(): Promise<void> {
       // ignora mensagens de grupos
       if (msg.from.includes('@g.us')) return
 
-      const phone = msg.from.replace('@c.us', '')
+      // Suporta @c.us (traditional) e @lid (WhatsApp Linked Device ID / privacy)
+      let phone: string
+      if (msg.from.includes('@lid')) {
+        try {
+          const contact = await msg.getContact()
+          phone = contact.number
+          console.log(`[WA] @lid resolvido: ${msg.from} → ${phone}`)
+        } catch {
+          phone = msg.from.replace('@lid', '').replace('@c.us', '')
+          console.warn(`[WA] Falha ao resolver @lid, usando fallback: ${phone}`)
+        }
+      } else {
+        phone = msg.from.replace('@c.us', '')
+      }
+
       const body = msg.body?.trim() ?? ''
       const upper = body.toUpperCase()
 
       console.log(`[WA] Mensagem de ${phone}: "${body}"`)
 
       const uid = await findUidByPhone(phone)
-      if (!uid) return // número não cadastrado ou não verificado, ignora
+      if (!uid) {
+        console.warn(`[WA] UID não encontrado para phone: "${phone}" — número não cadastrado ou não verificado`)
+        return
+      }
 
       // PARAR
       if (upper === 'PARAR') {
