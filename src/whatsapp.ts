@@ -259,7 +259,7 @@ export function initWhatsApp(): Promise<void> {
         }
         clearPending(phone)
         const weekId = getCurrentWeekId()
-        const result = await registerDropViaBot(uid, weekId, pending.accountQuery, pending.steamValue)
+        const result = await registerDropViaBot(uid, weekId, pending.accountQuery, pending.steamValue, pending.itemName)
         if (!result) {
           const status = await getDropStatus(uid, weekId)
           const accountNames = status.map(a => a.name)
@@ -294,7 +294,7 @@ export function initWhatsApp(): Promise<void> {
         }
 
         const weekId = getCurrentWeekId()
-        const result = await registerDropViaBot(uid, weekId, accountQuery, steamValue)
+        const result = await registerDropViaBot(uid, weekId, accountQuery, steamValue, undefined)
 
         if (!result) {
           const status = await getDropStatus(uid, weekId)

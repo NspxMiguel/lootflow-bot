@@ -162,6 +162,7 @@ export async function registerDropViaBot(
   weekId: string,
   accountNameQuery: string,
   steamValue: number,
+  itemName?: string,
 ): Promise<{ accountName: string; dropNumber: number } | null> {
   const accounts = await getActiveAccounts(uid)
   // match por nome (case-insensitive, parcial)
@@ -180,6 +181,9 @@ export async function registerDropViaBot(
     dropNumber,
     steamValue,
     cashoutValue: steamValue * 0.85,
+    sold: false,
+    item: { name: itemName ?? '', hashName: itemName ?? '', imageUrl: '' },
+    createdAt: new Date().toISOString(),
     registeredAt: new Date().toISOString(),
     source: 'whatsapp',
   })
