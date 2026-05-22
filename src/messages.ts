@@ -160,7 +160,6 @@ export function buildTestMessage(): string {
     `✅ Conexão OK. Vou te lembrar dos drops CS2 toda semana.\n\n` +
     `Comandos disponíveis:\n` +
     `*STATUS* — ver drops da semana\n` +
-    `*DROP [conta] [valor]* — registrar drop\n` +
     `*AJUDA* — ver todos os comandos\n\n` +
     `⚙️ Configurações em: LootFlow → Notificações WhatsApp\n\n` +
     `_Responda_ *PARAR* _para desativar._`
@@ -185,14 +184,6 @@ export function buildDropStatusMessage(accounts: Array<{ name: string; drops: nu
   return `🎮 *LootFlow* — Drops desta semana\n\n${lines}${footer}`
 }
 
-export function buildDropRegisteredMessage(accountName: string, dropNumber: number, steamValue: number): string {
-  const msgs = [
-    `✅ *Drop registrado!*\n\n• Conta: *${accountName}*\n• Drop nº ${dropNumber}\n• Steam: R$ ${steamValue.toFixed(2)} · Estimativa: R$ ${(steamValue * 0.85).toFixed(2)}\n\n_Responda_ *STATUS* _para ver tudo._`,
-    `💰 *Registrado!* ${accountName} · drop ${dropNumber}\n\nR$ ${steamValue.toFixed(2)} no bolso (estimativa R$ ${(steamValue * 0.85).toFixed(2)})\n\n_Responda_ *STATUS* _para o resumo._`,
-    `✅ *${accountName}* — drop ${dropNumber} registrado!\n\nValor: R$ ${steamValue.toFixed(2)}\n\nBora fazer o próximo 💪\n\n_Responda_ *STATUS* _para ver todos._`,
-  ]
-  return pick(msgs)
-}
 
 // ─── Boas-vindas modo xingamentos ────────────────────────────────────────────
 
@@ -212,10 +203,6 @@ export function buildXingamentosWelcomeMessage(): string {
 
 const COMMANDS_LIST =
   `*STATUS* ou *DROPS* — drops desta semana\n` +
-  `*DROP [conta] [item]* — registrar drop (busca preço automático)\n` +
-  `  Ex: _DROP AKM Operation Bravo Case_\n` +
-  `*DROP [conta] [valor]* — registrar drop com valor manual\n` +
-  `  Ex: _DROP AKM 15.50_\n` +
   `*/HELP* ou *AJUDA* — esta lista\n` +
   `*PARAR* — desativar lembretes`
 
@@ -235,42 +222,6 @@ export function buildUnknownCommandMessage(original: string): string {
     `Comandos disponíveis:\n` +
     COMMANDS_LIST +
     `\n\n👉 https://spxmiguel.github.io/LootFlow`
-  )
-}
-
-export function buildDropConfirmMessage(
-  accountName: string,
-  itemName: string,
-  price: number,
-): string {
-  return (
-    `🔍 *Confirmar drop?*\n\n` +
-    `• Conta: *${accountName}*\n` +
-    `• Item: ${itemName}\n` +
-    `• Preço Steam: *R$ ${price.toFixed(2)}*\n` +
-    `• Estimativa cashout: R$ ${(price * 0.85).toFixed(2)}\n\n` +
-    `Responda *SIM* para registrar ou *NÃO* para cancelar.`
-  )
-}
-
-export function buildDropCancelledMessage(): string {
-  return `❌ *Drop cancelado.* Nada foi registrado.`
-}
-
-export function buildSteamNotFoundMessage(query: string): string {
-  return (
-    `❌ Não encontrei o item *"${query}"* no Steam Market.\n\n` +
-    `Tente usar o nome exato, ou informe o valor manualmente:\n` +
-    `  Ex: _DROP AKM 15.50_`
-  )
-}
-
-export function buildAccountNotFoundMessage(query: string, accounts: string[]): string {
-  const list = accounts.map(a => `• ${a}`).join('\n')
-  return (
-    `❌ Conta "*${query}*" não encontrada.\n\n` +
-    `Suas contas ativas:\n${list}\n\n` +
-    `Use parte do nome. Ex: _DROP AKM 15.50_`
   )
 }
 

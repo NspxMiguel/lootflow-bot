@@ -156,41 +156,6 @@ export async function updatePhone(uid: string, phone: string): Promise<void> {
     .update({ 'whatsapp.phone': phone })
 }
 
-/** Registra um drop via bot — retorna o doc criado ou null se conta não encontrada */
-export async function registerDropViaBot(
-  uid: string,
-  weekId: string,
-  accountNameQuery: string,
-  steamValue: number,
-  itemName?: string,
-): Promise<{ accountName: string; dropNumber: number } | null> {
-  const accounts = await getActiveAccounts(uid)
-  // match por nome (case-insensitive, parcial)
-  const query = accountNameQuery.toLowerCase()
-  const account = accounts.find(a => a.name.toLowerCase().includes(query))
-  if (!account) return null
-
-  const drops = await getDropsForWeek(uid, weekId)
-  const accDrops = drops.filter(d => d.accountId === account.id)
-  const dropNumber = accDrops.length + 1
-
-  const docId = `${Date.now()}_wa`
-  await db.collection('users').doc(uid).collection('drops').doc(docId).set({
-    accountId: account.id,
-    weekId,
-    dropNumber,
-    steamValue,
-    cashoutValue: steamValue * 0.85,
-    sold: false,
-    item: { name: itemName ?? '', hashName: itemName ?? '', imageUrl: '' },
-    createdAt: new Date().toISOString(),
-    registeredAt: new Date().toISOString(),
-    source: 'whatsapp',
-  })
-
-  return { accountName: account.name, dropNumber }
-}
-
 /** Lista contas ativas com status de drops desta semana */
 export async function getDropStatus(uid: string, weekId: string): Promise<Array<{
   name: string
