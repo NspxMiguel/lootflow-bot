@@ -45,8 +45,41 @@ function clearPending(phone: string) {
 let client: Client
 let isReady = false
 
+// LID → real phone cache (WhatsApp privacy mode)
+const lidToPhone = new Map<string, string>()
+
 export function isClientReady(): boolean {
   return isReady
+}
+
+/** Resolve LID para phone real usando cache ou busca exaustiva */
+async function resolveLid(lid: string): Promise<string | null> {
+  // Cache hit
+  if (lidToPhone.has(lid)) return lidToPhone.get(lid)!
+
+  // Tenta obter o chat pelo phone de todos os usuários e ver se bate com o LID
+  try {
+    const users = await getAllUsersWithWA()
+    for (const u of users) {
+      try {
+        const chat = await client.getChatById(`${u.whatsapp.phone}@c.us`)
+        if (chat?.id?.server === 'lid' && chat.id.user === lid) {
+          lidToPhone.set(lid, u.whatsapp.phone)
+          console.log(`[WA] LID mapeado via chat: ${lid} → ${u.whatsapp.phone}`)
+          return u.whatsapp.phone
+        }
+        // Testa se o contact tem um lid equivalente
+        const contact = await client.getContactById(`${u.whatsapp.phone}@c.us`)
+        const contactLid = (contact as any)?.id?.lid ?? (contact as any)?.lid
+        if (contactLid && contactLid === lid) {
+          lidToPhone.set(lid, u.whatsapp.phone)
+          console.log(`[WA] LID mapeado via contact: ${lid} → ${u.whatsapp.phone}`)
+          return u.whatsapp.phone
+        }
+      } catch {}
+    }
+  } catch {}
+  return null
 }
 
 export async function sendMessage(phone: string, text: string): Promise<void> {
@@ -57,6 +90,14 @@ export async function sendMessage(phone: string, text: string): Promise<void> {
   try {
     await client.sendMessage(`${phone}@c.us`, text)
     console.log(`[WA] ✅ Mensagem enviada para ${phone}`)
+    // Cache LID após send (se o chat usar @lid)
+    try {
+      const chat = await client.getChatById(`${phone}@c.us`)
+      if (chat?.id?.server === 'lid') {
+        lidToPhone.set(chat.id.user, phone)
+        console.log(`[WA] LID cacheado no send: ${chat.id.user} → ${phone}`)
+      }
+    } catch {}
   } catch (e) {
     console.error(`[WA] ❌ Falha ao enviar para ${phone}:`, e)
   }
@@ -123,12 +164,26 @@ export function initWhatsApp(): Promise<void> {
       setCurrentQR(qr)
     })
 
-    client.on('ready', () => {
+    client.on('ready', async () => {
       isReady = true
       setBotConnected()
       const info = client.info
       console.log(`[WA] ✅ Conectado: ${info.pushname} (${info.wid.user})`)
       resolve()
+
+      // Pré-popula cache LID → phone para todos os usuários cadastrados
+      try {
+        const users = await getAllUsersWithWA()
+        for (const u of users) {
+          try {
+            const chat = await client.getChatById(`${u.whatsapp.phone}@c.us`)
+            if (chat?.id?.server === 'lid') {
+              lidToPhone.set(chat.id.user, u.whatsapp.phone)
+              console.log(`[WA] LID pré-cacheado: ${chat.id.user} → ${u.whatsapp.phone}`)
+            }
+          } catch {}
+        }
+      } catch {}
     })
 
     client.on('disconnected', (reason) => {
@@ -149,13 +204,14 @@ export function initWhatsApp(): Promise<void> {
       // Suporta @c.us (traditional) e @lid (WhatsApp Linked Device ID / privacy)
       let phone: string
       if (msg.from.includes('@lid')) {
-        try {
-          const contact = await msg.getContact()
-          phone = contact.number
-          console.log(`[WA] @lid resolvido: ${msg.from} → ${phone}`)
-        } catch {
-          phone = msg.from.replace('@lid', '').replace('@c.us', '')
-          console.warn(`[WA] Falha ao resolver @lid, usando fallback: ${phone}`)
+        const lid = msg.from.replace('@lid', '')
+        const resolved = await resolveLid(lid)
+        if (resolved) {
+          phone = resolved
+          console.log(`[WA] @lid resolvido: ${lid} → ${phone}`)
+        } else {
+          console.warn(`[WA] @lid não resolvido: ${lid} — sem mapeamento disponível`)
+          return
         }
       } else {
         phone = msg.from.replace('@c.us', '')
