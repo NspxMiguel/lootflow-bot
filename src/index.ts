@@ -2,6 +2,7 @@ import { startServer } from './server'
 import { initWhatsApp } from './whatsapp'
 import { startScheduler } from './scheduler'
 import fs from 'fs'
+import { execSync } from 'child_process'
 
 async function main() {
   // Garante que o diretório de sessão existe (Railway Volume pode estar vazio)
@@ -10,6 +11,12 @@ async function main() {
     fs.mkdirSync(sessionPath, { recursive: true })
     console.log(`[Boot] Diretório de sessão criado: ${sessionPath}`)
   }
+
+  // Remove Chromium lock files deixados por crashes anteriores
+  try {
+    execSync(`find ${sessionPath} -name "SingletonLock" -delete 2>/dev/null; find ${sessionPath} -name "SingletonSocket" -delete 2>/dev/null; find ${sessionPath} -name "SingletonCookie" -delete 2>/dev/null; true`)
+    console.log('[Boot] Lock files do Chromium limpos.')
+  } catch { /* ignora se não existirem */ }
   console.log('╔══════════════════════════════╗')
   console.log('║      LootFlow WhatsApp Bot   ║')
   console.log('╚══════════════════════════════╝\n')
