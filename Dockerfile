@@ -3,10 +3,8 @@ FROM node:20-slim
 # Instala Chromium e dependências necessárias para Puppeteer
 RUN apt-get update && apt-get install -y \
   chromium \
-  libgbm-dev \
   libnss3 \
   libatk-bridge2.0-0 \
-  libgtk-3-0 \
   libxss1 \
   libasound2 \
   --no-install-recommends && \
@@ -15,6 +13,9 @@ RUN apt-get update && apt-get install -y \
 # Diz ao Puppeteer onde o Chromium está
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+
+# Limita heap do Node.js a 400 MB — sobra espaço para o Chromium
+ENV NODE_OPTIONS="--max-old-space-size=400"
 
 WORKDIR /app
 

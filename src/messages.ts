@@ -210,15 +210,58 @@ export function buildXingamentosWelcomeMessage(): string {
   )
 }
 
+const COMMANDS_LIST =
+  `*STATUS* ou *DROPS* — drops desta semana\n` +
+  `*DROP [conta] [item]* — registrar drop (busca preço automático)\n` +
+  `  Ex: _DROP AKM Operation Bravo Case_\n` +
+  `*DROP [conta] [valor]* — registrar drop com valor manual\n` +
+  `  Ex: _DROP AKM 15.50_\n` +
+  `*/HELP* ou *AJUDA* — esta lista\n` +
+  `*PARAR* — desativar lembretes`
+
 export function buildHelpMessage(): string {
   return (
     `🎮 *LootFlow Bot* — Comandos\n\n` +
-    `*STATUS* ou *DROPS* — drops desta semana\n` +
-    `*DROP [conta] [valor]* — registrar drop\n` +
-    `  Ex: _DROP AKM 15.50_\n` +
-    `  Ex: _DROP servente 8.90_\n` +
-    `*PARAR* — desativar lembretes\n\n` +
-    `👉 https://spxmiguel.github.io/LootFlow`
+    COMMANDS_LIST +
+    `\n\n👉 https://spxmiguel.github.io/LootFlow`
+  )
+}
+
+export function buildUnknownCommandMessage(original: string): string {
+  // trim to 40 chars to avoid huge echo
+  const safe = original.length > 40 ? original.slice(0, 40) + '…' : original
+  return (
+    `❓ Não reconheci o comando *"${safe}"*.\n\n` +
+    `Comandos disponíveis:\n` +
+    COMMANDS_LIST +
+    `\n\n👉 https://spxmiguel.github.io/LootFlow`
+  )
+}
+
+export function buildDropConfirmMessage(
+  accountName: string,
+  itemName: string,
+  price: number,
+): string {
+  return (
+    `🔍 *Confirmar drop?*\n\n` +
+    `• Conta: *${accountName}*\n` +
+    `• Item: ${itemName}\n` +
+    `• Preço Steam: *R$ ${price.toFixed(2)}*\n` +
+    `• Estimativa cashout: R$ ${(price * 0.85).toFixed(2)}\n\n` +
+    `Responda *SIM* para registrar ou *NÃO* para cancelar.`
+  )
+}
+
+export function buildDropCancelledMessage(): string {
+  return `❌ *Drop cancelado.* Nada foi registrado.`
+}
+
+export function buildSteamNotFoundMessage(query: string): string {
+  return (
+    `❌ Não encontrei o item *"${query}"* no Steam Market.\n\n` +
+    `Tente usar o nome exato, ou informe o valor manualmente:\n` +
+    `  Ex: _DROP AKM 15.50_`
   )
 }
 
