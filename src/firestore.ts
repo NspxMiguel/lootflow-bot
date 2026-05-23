@@ -27,6 +27,7 @@ interface DaySchedule {
 export interface WhatsAppSettings {
   phone: string
   enabled: boolean
+  language?: 'pt' | 'en'
   // Novo: schedule por dia
   schedule?: { [day: number]: DaySchedule }
   // Legacy
@@ -41,6 +42,7 @@ export interface WhatsAppSettings {
   verified?: boolean
   verifyCode?: string
   lastReminderAt?: string
+  consentAt?: string
 }
 
 interface AppSettings {

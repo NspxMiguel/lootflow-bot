@@ -36,15 +36,19 @@ async function processQueue(): Promise<void> {
           await sendMessage(wa.phone, buildXingamentosWelcomeMessage())
           console.log(`[Queue] 🤬 Boas-vindas xingamentos para uid ${item.uid} (${wa.phone})`)
         } else if (item.type === 'test') {
-          await sendMessage(wa.phone, buildTestMessage())
+          await sendMessage(wa.phone, buildTestMessage(wa.language ?? 'pt'))
           console.log(`[Queue] ✅ Teste enviado para uid ${item.uid} (${wa.phone})`)
         } else {
           const weekId = getCurrentWeekId()
+          const lang = wa.language ?? 'pt'
           const pending = await getPendingAccounts(item.uid, weekId)
           if (pending.length === 0) {
-            await sendMessage(wa.phone, `🎮 *LootFlow* — Simulação de lembrete\n\n✅ Nenhum drop pendente esta semana! Tudo registrado.`)
+            const noDropsMsg = lang === 'en'
+              ? `🎮 *LootFlow* — Reminder simulation\n\n✅ No pending drops this week! All registered.`
+              : `🎮 *LootFlow* — Simulação de lembrete\n\n✅ Nenhum drop pendente esta semana! Tudo registrado.`
+            await sendMessage(wa.phone, noDropsMsg)
           } else {
-            await sendMessage(wa.phone, buildReminderMessage(pending, 1, wa.encheSaco ?? false, wa.xingamentos ?? false, wa.enabledXingamentos))
+            await sendMessage(wa.phone, buildReminderMessage(pending, 1, wa.encheSaco ?? false, wa.xingamentos ?? false, wa.enabledXingamentos, lang))
           }
           console.log(`[Queue] ✅ Lembrete forçado para uid ${item.uid} (${wa.phone})`)
         }
@@ -128,7 +132,7 @@ async function runReminders(): Promise<void> {
         const msSinceDay = now.getTime() - startOfDay.getTime()
         const attempt = Math.floor(msSinceDay / intervalMs) + 1
 
-        const msg = buildReminderMessage(pending, attempt, true, whatsapp.xingamentos ?? false, whatsapp.enabledXingamentos)
+        const msg = buildReminderMessage(pending, attempt, true, whatsapp.xingamentos ?? false, whatsapp.enabledXingamentos, whatsapp.language ?? 'pt')
         await sendMessage(whatsapp.phone, msg)
         await saveLastReminderAt(uid)
         console.log(`[Scheduler] 🔔 Enche saco tentativa ${attempt} para uid ${uid}`)
@@ -142,7 +146,7 @@ async function runReminders(): Promise<void> {
           continue
         }
 
-        const msg = buildReminderMessage(pending, 1, false, whatsapp.xingamentos ?? false, whatsapp.enabledXingamentos)
+        const msg = buildReminderMessage(pending, 1, false, whatsapp.xingamentos ?? false, whatsapp.enabledXingamentos, whatsapp.language ?? 'pt')
         await sendMessage(whatsapp.phone, msg)
         await saveLastReminderAt(uid)
         console.log(`[Scheduler] ✅ Lembrete para uid ${uid}`)

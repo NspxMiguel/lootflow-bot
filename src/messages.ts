@@ -80,16 +80,45 @@ const REMINDERS_XINGAMENTOS = [
     `💢 *ÚLTIMA CHAMADA SEU FILHO DA PUTA!*\n\nFarma essa${n > 1 ? 's' : ''} ${n} conta${n > 1 ? 's' : ''} agora ou continua sendo o rei dos esquecidos:\n${lines}\n\n👉 ${LINK}${PARAR}`,
 ]
 
+const REMINDERS_NORMAL_EN = [
+  (lines: string) =>
+    `🎮 *LootFlow* — Reminder\n\nStill have drops to collect this week:\n${lines}\n\n👉 https://spxmiguel.github.io/LootFlow\n\n_Reply_ *STOP* _to disable._`,
+  (lines: string) =>
+    `🎮 *LootFlow* — Hey!\n\nDon't forget your drops:\n${lines}\n\nLog them at: https://spxmiguel.github.io/LootFlow\n\n_Reply_ *STOP* _to disable._`,
+  (lines: string) =>
+    `🎮 *LootFlow* — Drop available\n\n${lines}\n\nMoney waiting for you 💰\nhttps://spxmiguel.github.io/LootFlow\n\n_Reply_ *STOP* _to disable._`,
+]
+
+const REMINDERS_ENCHESACO_EN = [
+  (lines: string) =>
+    `🔔 *LootFlow* — Hey!\n\nStill have pending drops:\n${lines}\n\n👉 https://spxmiguel.github.io/LootFlow\n\n_Reply_ *STOP* _to disable._`,
+  (lines: string) =>
+    `⚠️ *LootFlow* — Still haven't done it?\n\nThese drops are waiting:\n${lines}\n\nGo log them: https://spxmiguel.github.io/LootFlow\n\n_Reply_ *STOP* _to disable._`,
+  (lines: string) =>
+    `😤 *LootFlow* — Seriously?\n\nYou still haven't registered:\n${lines}\n\nThe money is RIGHT THERE 💸\nhttps://spxmiguel.github.io/LootFlow\n\n_Reply_ *STOP* _to disable._`,
+]
+
 export function buildReminderMessage(
   pending: PendingAccount[],
   attempt: number,
   encheSaco: boolean,
   xingamentos = false,
   enabledXingamentos?: number[],
+  lang: 'pt' | 'en' = 'pt',
 ): string {
   const accountLines = pending
     .map(a => `• ${a.name} — ${a.dropsRegistered}/2 drops`)
     .join('\n')
+
+  // EN users: skip xingamentos (inherently PT), use EN reminder pools
+  if (lang === 'en') {
+    if (encheSaco) {
+      const fn = pick(REMINDERS_ENCHESACO_EN)
+      return fn(accountLines)
+    }
+    const fn = pick(REMINDERS_NORMAL_EN)
+    return fn(accountLines)
+  }
 
   if (xingamentos) {
     const pool = enabledXingamentos != null
@@ -161,7 +190,18 @@ export function buildAllDoneXingamentoMessage(totalCashout: number): string {
 
 // ─── Mensagem de teste ────────────────────────────────────────────────────────
 
-export function buildTestMessage(): string {
+export function buildTestMessage(lang: 'pt' | 'en' = 'pt'): string {
+  if (lang === 'en') {
+    return (
+      `🎮 *LootFlow Bot* — I'm here!\n\n` +
+      `✅ Connection OK. I'll remind you about CS2 drops every week.\n\n` +
+      `Available commands:\n` +
+      `*STATUS* — see this week's drops\n` +
+      `*HELP* — see all commands\n\n` +
+      `⚙️ Settings at: LootFlow → WhatsApp Notifications\n\n` +
+      `_Reply_ *STOP* _to disable._`
+    )
+  }
   return (
     `🎮 *LootFlow Bot* — tô aqui!\n\n` +
     `✅ Conexão OK. Vou te lembrar dos drops CS2 toda semana.\n\n` +
@@ -208,33 +248,59 @@ export function buildXingamentosWelcomeMessage(): string {
   )
 }
 
-const COMMANDS_LIST =
+const COMMANDS_LIST_PT =
   `*STATUS* ou *DROPS* — drops desta semana\n` +
   `*/HELP* ou *AJUDA* — esta lista\n` +
   `*PARAR* — desativar lembretes`
 
-export function buildHelpMessage(): string {
+const COMMANDS_LIST_EN =
+  `*STATUS* or *DROPS* — this week's drops\n` +
+  `*/HELP* or *AJUDA* — this list\n` +
+  `*STOP* or *PARAR* — disable reminders`
+
+export function buildHelpMessage(lang: 'pt' | 'en' = 'pt'): string {
+  if (lang === 'en') {
+    return (
+      `🎮 *LootFlow Bot* — Commands\n\n` +
+      COMMANDS_LIST_EN +
+      `\n\n👉 https://spxmiguel.github.io/LootFlow`
+    )
+  }
   return (
     `🎮 *LootFlow Bot* — Comandos\n\n` +
-    COMMANDS_LIST +
+    COMMANDS_LIST_PT +
     `\n\n👉 https://spxmiguel.github.io/LootFlow`
   )
 }
 
-export function buildUnknownCommandMessage(original: string): string {
-  // trim to 40 chars to avoid huge echo
+export function buildUnknownCommandMessage(original: string, lang: 'pt' | 'en' = 'pt'): string {
   const safe = original.length > 40 ? original.slice(0, 40) + '…' : original
+  if (lang === 'en') {
+    return (
+      `❓ I didn't recognize the command *"${safe}"*.\n\n` +
+      `Available commands:\n` +
+      COMMANDS_LIST_EN +
+      `\n\n👉 https://spxmiguel.github.io/LootFlow`
+    )
+  }
   return (
     `❓ Não reconheci o comando *"${safe}"*.\n\n` +
     `Comandos disponíveis:\n` +
-    COMMANDS_LIST +
+    COMMANDS_LIST_PT +
     `\n\n👉 https://spxmiguel.github.io/LootFlow`
   )
 }
 
 // ─── Stop ─────────────────────────────────────────────────────────────────────
 
-export function buildStopConfirmMessage(): string {
+export function buildStopConfirmMessage(lang: 'pt' | 'en' = 'pt'): string {
+  if (lang === 'en') {
+    const msgs = [
+      `✅ *LootFlow* — Reminders disabled.\n\nPeace and quiet 🤫\nTo re-enable: Settings → WhatsApp Notifications`,
+      `✅ *LootFlow* — Got it, going silent.\n\nTo bring me back: Settings → WhatsApp Notifications`,
+    ]
+    return pick(msgs)
+  }
   const msgs = [
     `✅ *LootFlow* — Lembretes desativados.\n\nPaz e silêncio 🤫\nPara reativar: Configurações → Notificações WhatsApp`,
     `✅ *LootFlow* — Tá bom, vou parar.\n\nSe quiser reativar é só ir em: Configurações → Notificações WhatsApp`,

@@ -1,7 +1,7 @@
 import { Client, LocalAuth } from 'whatsapp-web.js'
 import qrcode from 'qrcode-terminal'
 import { config } from './config'
-import { findUidByPhone, disableWhatsApp, getDropStatus, getAllUsersWithWA } from './firestore'
+import { findUidByPhone, disableWhatsApp, getDropStatus, getAllUsersWithWA, getUserWASettings } from './firestore'
 import {
   buildStopConfirmMessage, buildHelpMessage, buildUnknownCommandMessage,
   buildDropStatusMessage,
@@ -195,16 +195,20 @@ export function initWhatsApp(): Promise<void> {
         return
       }
 
-      // PARAR
-      if (upper === 'PARAR') {
+      // Detecta idioma do usuário (um read só, usado em todos os branches)
+      const waSettings = await getUserWASettings(uid)
+      const lang: 'pt' | 'en' = waSettings?.language ?? 'pt'
+
+      // PARAR / STOP
+      if (upper === 'PARAR' || upper === 'STOP') {
         await disableWhatsApp(uid)
-        await sendMessage(phone, buildStopConfirmMessage())
+        await sendMessage(phone, buildStopConfirmMessage(lang))
         return
       }
 
       // AJUDA / HELP / /HELP
       if (upper === 'AJUDA' || upper === 'HELP' || upper === '/HELP' || upper === '?') {
-        await sendMessage(phone, buildHelpMessage())
+        await sendMessage(phone, buildHelpMessage(lang))
         return
       }
 
@@ -217,7 +221,7 @@ export function initWhatsApp(): Promise<void> {
       }
 
       // Qualquer outra mensagem → eco + lista de comandos
-      await sendMessage(phone, buildUnknownCommandMessage(body))
+      await sendMessage(phone, buildUnknownCommandMessage(body, lang))
 
     })
 
