@@ -6,15 +6,22 @@
 import type { WhatsAppSettings } from './firestore'
 
 export function getWeekIdForDate(date: Date = new Date()): string {
-  const d = new Date(date)
-  const day = d.getDay() // 0=Sun, 1=Mon, 2=Tue, ...
-  // Dias para voltar até a terça-feira mais recente
-  const daysBack = day === 0 ? 5 : (day - 2 + 7) % 7
-  d.setDate(d.getDate() - daysBack)
-  d.setHours(0, 0, 0, 0)
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const dd = String(d.getDate()).padStart(2, '0')
+  // CS2 semana vira terça 21h BRT (UTC-3) = quarta 00h UTC
+  // Trabalha tudo em BRT para evitar ambiguidade de fuso
+  const BRT = -3 * 3600000
+  const brtMs = date.getTime() + BRT
+  const d = new Date(brtMs)
+
+  let day = d.getUTCDay() // 0=Dom ... 2=Ter ...
+  let daysBack = day === 0 ? 5 : (day - 2 + 7) % 7
+
+  // Terça antes das 21h BRT → semana anterior ainda não acabou
+  if (day === 2 && d.getUTCHours() < 21) daysBack += 7
+
+  const weekStart = new Date(brtMs - daysBack * 86400000)
+  const y = weekStart.getUTCFullYear()
+  const m = String(weekStart.getUTCMonth() + 1).padStart(2, '0')
+  const dd = String(weekStart.getUTCDate()).padStart(2, '0')
   return `${y}-${m}-${dd}`
 }
 
