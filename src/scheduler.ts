@@ -3,7 +3,7 @@ import {
   getAllUsersWithWA, getPendingAccounts, getWeeklySummary, drainNotificationQueue,
   getUserWASettings, saveLastReminderAt,
 } from './firestore'
-import { getCurrentWeekId, isActiveForSchedule } from './checker'
+import { getCurrentWeekId, getWeekIdForDate, isActiveForSchedule } from './checker'
 import {
   buildReminderMessage, buildWeeklySummaryMessage, buildTestMessage, buildAllDoneXingamentoMessage, buildXingamentosWelcomeMessage,
 } from './messages'
@@ -158,13 +158,16 @@ async function runReminders(): Promise<void> {
   }
 }
 
-// ─── Resumo semanal (terça cedo) ──────────────────────────────────────────────
+// ─── Resumo semanal (quarta 12h BRT, após reset de terça 21h) ─────────────────
 
 async function runWeeklySummaries(): Promise<void> {
   if (!isClientReady()) return
 
   console.log('\n[Scheduler] 📊 Enviando resumos semanais...')
-  const weekId = getCurrentWeekId()
+  // A semana CS2 termina terça 21h BRT. Este cron roda quarta 12h BRT.
+  // "ontem" (terça) ainda era a semana que acabou → getWeekIdForDate devolve o weekId correto.
+  const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000)
+  const weekId = getWeekIdForDate(yesterday)
   const users = await getAllUsersWithWA()
 
   for (const { uid, whatsapp } of users) {
@@ -189,11 +192,11 @@ export function startScheduler(): void {
   // Lembretes: a cada 30 min (lógica interna controla intervalo por usuário)
   cron.schedule('*/30 * * * *', () => runReminders(), { timezone: 'UTC' })
 
-  // Resumo semanal: terça 08h BRT = 11h UTC
-  cron.schedule('0 11 * * 2', () => runWeeklySummaries(), { timezone: 'UTC' })
+  // Resumo semanal: quarta 12h BRT = 15h UTC (semana termina terça 21h BRT)
+  cron.schedule('0 15 * * 3', () => runWeeklySummaries(), { timezone: 'UTC' })
 
   console.log('[Scheduler] ✅ Crons ativos:')
   console.log('  • A cada minuto    — fila (testes, drops registrados)')
   console.log('  • A cada 30 min    — lembretes (intervalo por usuário)')
-  console.log('  • Terça 08h BRT    — resumo semanal')
+  console.log('  • Quarta 12h BRT   — resumo semanal (semana anterior)')
 }
