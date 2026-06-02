@@ -3,7 +3,7 @@ import {
   getAllUsersWithWA, getPendingAccounts, getWeeklySummary, drainNotificationQueue,
   getUserWASettings, saveLastReminderAt,
 } from './firestore'
-import { getCurrentWeekId, getWeekIdForDate, isActiveForSchedule } from './checker'
+import { getCurrentWeekId, getWeekIdForDate, isActiveForSchedule, isInQuietHours } from './checker'
 import {
   buildReminderMessage, buildWeeklySummaryMessage, buildTestMessage, buildAllDoneXingamentoMessage, buildXingamentosWelcomeMessage,
 } from './messages'
@@ -158,29 +158,51 @@ async function runReminders(): Promise<void> {
   }
 }
 
-// ─── Resumo semanal (quarta 12h BRT, após reset de terça 21h) ─────────────────
+// ─── Resumo semanal (quarta 12h-22h BRT, respeitando quiet hours) ─────────────
+
+// Rastreia envios já feitos nesta sessão: evita duplicatas entre as tentativas horárias.
+// Chave: `${uid}:${weekId}` — limpo quando o processo reinicia (o que é OK).
+const _sentWeeklySummaries = new Set<string>()
 
 async function runWeeklySummaries(): Promise<void> {
   if (!isClientReady()) return
 
-  console.log('\n[Scheduler] 📊 Enviando resumos semanais...')
-  // A semana CS2 termina terça 21h BRT. Este cron roda quarta 12h BRT.
-  // "ontem" (terça) ainda era a semana que acabou → getWeekIdForDate devolve o weekId correto.
+  // A semana CS2 termina terça 21h BRT. Este cron roda quarta 12h-22h BRT.
+  // "ontem" (terça) ainda estava na semana que acabou → weekId correto.
   const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000)
   const weekId = getWeekIdForDate(yesterday)
   const users = await getAllUsersWithWA()
+  let sent = 0
 
   for (const { uid, whatsapp } of users) {
     if (!whatsapp.weeklySummary) continue
+
+    const key = `${uid}:${weekId}`
+    if (_sentWeeklySummaries.has(key)) continue // já enviado nesta sessão
+
+    // Respeita quiet hours do usuário — tenta novamente na próxima janela de 2h
+    const qStart = whatsapp.quietStart
+    const qEnd   = whatsapp.quietEnd
+    if (qStart && qEnd && isInQuietHours(qStart, qEnd, config.tzOffset)) {
+      console.log(`[Scheduler] 🤫 Resumo uid ${uid} — em quiet hours, tentará depois`)
+      continue
+    }
+
     try {
       const summary = await getWeeklySummary(uid, weekId)
-      if (summary.totalDrops === 0) continue
+      if (summary.totalDrops === 0) {
+        _sentWeeklySummaries.add(key) // sem drops — não tenta de novo
+        continue
+      }
       await sendMessage(whatsapp.phone, buildWeeklySummaryMessage(summary))
+      _sentWeeklySummaries.add(key)
+      sent++
       console.log(`[Scheduler] ✅ Resumo semanal para uid ${uid}`)
     } catch (e) {
       console.error(`[Scheduler] ❌ Resumo para uid ${uid}:`, e)
     }
   }
+  if (sent > 0) console.log(`[Scheduler] 📊 ${sent} resumo(s) semanal(is) enviado(s)`)
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
@@ -192,11 +214,12 @@ export function startScheduler(): void {
   // Lembretes: a cada 30 min (lógica interna controla intervalo por usuário)
   cron.schedule('*/30 * * * *', () => runReminders(), { timezone: 'UTC' })
 
-  // Resumo semanal: quarta 12h BRT = 15h UTC (semana termina terça 21h BRT)
-  cron.schedule('0 15 * * 3', () => runWeeklySummaries(), { timezone: 'UTC' })
+  // Resumo semanal: quarta 12h-22h BRT a cada 2h (= 15,17,19,21,23,01 UTC)
+  // Tenta de 2h em 2h até enviar — respeita quiet hours de cada usuário.
+  cron.schedule('0 15,17,19,21,23,1 * * 3,4', () => runWeeklySummaries(), { timezone: 'UTC' })
 
   console.log('[Scheduler] ✅ Crons ativos:')
   console.log('  • A cada minuto    — fila (testes, drops registrados)')
   console.log('  • A cada 30 min    — lembretes (intervalo por usuário)')
-  console.log('  • Quarta 12h BRT   — resumo semanal (semana anterior)')
+  console.log('  • Quarta 12h-22h BRT (a cada 2h) — resumo semanal (respeita quiet hours)')
 }
