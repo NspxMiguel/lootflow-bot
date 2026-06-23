@@ -1,7 +1,10 @@
 import express from 'express'
 import QRCode from 'qrcode'
+import { sendMessage, isClientReady } from './whatsapp'
 
 const app = express()
+app.use(express.json())
+
 let currentQR: string | null = null
 let botStatus: 'waiting_qr' | 'connected' | 'disconnected' = 'waiting_qr'
 
@@ -62,9 +65,35 @@ app.get('/qr', async (_req, res) => {
   }
 })
 
+// ── /notify — endpoint para Agenda Pessoal enviar lembretes via WhatsApp
+app.post('/notify', async (req, res) => {
+  const { phone, message, secret } = req.body ?? {}
+
+  if (!secret || secret !== process.env.NOTIFY_SECRET) {
+    console.warn('[Agenda] /notify: secret inválido')
+    return res.status(401).json({ error: 'Unauthorized' })
+  }
+  if (!phone || !message) {
+    return res.status(400).json({ error: 'phone e message são obrigatórios' })
+  }
+  if (!isClientReady()) {
+    return res.status(503).json({ error: 'WhatsApp não conectado' })
+  }
+
+  try {
+    await sendMessage(String(phone), String(message))
+    console.log(`[Agenda] ✅ Lembrete enviado para ${phone}`)
+    return res.json({ success: true })
+  } catch (e) {
+    console.error(`[Agenda] ❌ Erro ao enviar para ${phone}:`, e)
+    return res.status(500).json({ error: String(e) })
+  }
+})
+
 export function startServer(port = 3000) {
   app.listen(port, () => {
     console.log(`[Server] ✅ HTTP em http://localhost:${port}`)
     console.log(`[Server] 📱 QR code em http://localhost:${port}/qr`)
+    console.log(`[Server] 📅 Agenda notify em http://localhost:${port}/notify`)
   })
 }
