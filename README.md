@@ -29,7 +29,7 @@ sudo apt update && sudo apt install -y \
 sudo npm i -g pm2
 
 # Clonar o repositório
-git clone https://github.com/spxmiguel/lootflow-bot
+git clone https://github.com/NspxMiguel/lootflow-bot
 cd lootflow-bot
 
 # Instalar dependências
