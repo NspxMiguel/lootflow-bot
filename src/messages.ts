@@ -10,31 +10,31 @@ function pick<T>(arr: T[]): T {
 
 const REMINDERS_NORMAL = [
   (lines: string) =>
-    `🎮 *LootFlow* — Lembrete\n\nAinda tem drop pra pegar essa semana:\n${lines}\n\n👉 https://nspxmiguel.github.io/LootFlow\n\n_Responda_ *PARAR* _para desativar._`,
+    `🎮 *LootFlow* — Lembrete\n\nAinda tem drop pra pegar essa semana:\n${lines}\n\n👉 https://www.nspx.dev/LootFlow\n\n_Responda_ *PARAR* _para desativar._`,
   (lines: string) =>
-    `🎮 *LootFlow* — Ei!\n\nNão esquece dos drops:\n${lines}\n\nRegistra lá: https://nspxmiguel.github.io/LootFlow\n\n_Responda_ *PARAR* _para desativar._`,
+    `🎮 *LootFlow* — Ei!\n\nNão esquece dos drops:\n${lines}\n\nRegistra lá: https://www.nspx.dev/LootFlow\n\n_Responda_ *PARAR* _para desativar._`,
   (lines: string) =>
-    `🎮 *LootFlow* — Drop disponível\n\n${lines}\n\nValor esperando por você 💰\nhttps://nspxmiguel.github.io/LootFlow\n\n_Responda_ *PARAR* _para desativar._`,
+    `🎮 *LootFlow* — Drop disponível\n\n${lines}\n\nValor esperando por você 💰\nhttps://www.nspx.dev/LootFlow\n\n_Responda_ *PARAR* _para desativar._`,
   (lines: string) =>
-    `🎮 *LootFlow*\n\nDrop dessa semana ainda não registrado:\n${lines}\n\nNão deixa o dinheiro escapar 👀\nhttps://nspxmiguel.github.io/LootFlow\n\n_Responda_ *PARAR* _para desativar._`,
+    `🎮 *LootFlow*\n\nDrop dessa semana ainda não registrado:\n${lines}\n\nNão deixa o dinheiro escapar 👀\nhttps://www.nspx.dev/LootFlow\n\n_Responda_ *PARAR* _para desativar._`,
 ]
 
 const REMINDERS_ENCHESACO = [
   (lines: string) =>
-    `🔔 *LootFlow* — Oi!\n\nAinda tem drops sobrando:\n${lines}\n\n👉 https://nspxmiguel.github.io/LootFlow\n\n_Responda_ *PARAR* _para desativar._`,
+    `🔔 *LootFlow* — Oi!\n\nAinda tem drops sobrando:\n${lines}\n\n👉 https://www.nspx.dev/LootFlow\n\n_Responda_ *PARAR* _para desativar._`,
   (lines: string) =>
-    `⚠️ *LootFlow* — Lembra não?\n\nEsses drops tão esperando:\n${lines}\n\nVai lá logo: https://nspxmiguel.github.io/LootFlow\n\n_Responda_ *PARAR* _para desativar._`,
+    `⚠️ *LootFlow* — Lembra não?\n\nEsses drops tão esperando:\n${lines}\n\nVai lá logo: https://www.nspx.dev/LootFlow\n\n_Responda_ *PARAR* _para desativar._`,
   (lines: string) =>
-    `🚨 *LootFlow* — Sério mesmo?\n\nAinda não registrou:\n${lines}\n\nO dinheiro tá ali, irmão 💸\nhttps://nspxmiguel.github.io/LootFlow\n\n_Responda_ *PARAR* _para desativar._`,
+    `🚨 *LootFlow* — Sério mesmo?\n\nAinda não registrou:\n${lines}\n\nO dinheiro tá ali, irmão 💸\nhttps://www.nspx.dev/LootFlow\n\n_Responda_ *PARAR* _para desativar._`,
   (lines: string) =>
-    `😤 *LootFlow* — Vai logo porra\n\nDrop parado esperando:\n${lines}\n\nCara, registra logo isso:\nhttps://nspxmiguel.github.io/LootFlow\n\n_Responda_ *PARAR* _para desativar._`,
+    `😤 *LootFlow* — Vai logo porra\n\nDrop parado esperando:\n${lines}\n\nCara, registra logo isso:\nhttps://www.nspx.dev/LootFlow\n\n_Responda_ *PARAR* _para desativar._`,
   (lines: string) =>
-    `💀 *LootFlow* — irmão...\n\nEssa semana tá quase acabando e você:\n${lines}\n\nAinda tá perdendo dinheiro real todo dia que passa 🤦‍♂️\nhttps://nspxmiguel.github.io/LootFlow\n\n_Responda_ *PARAR* _para desativar._`,
+    `💀 *LootFlow* — irmão...\n\nEssa semana tá quase acabando e você:\n${lines}\n\nAinda tá perdendo dinheiro real todo dia que passa 🤦‍♂️\nhttps://www.nspx.dev/LootFlow\n\n_Responda_ *PARAR* _para desativar._`,
   (lines: string) =>
-    `🎮 *LootFlow* — acorda\n\n${lines}\n\nEsse drop não vai se registrar sozinho né 😒\nhttps://nspxmiguel.github.io/LootFlow\n\n_Responda_ *PARAR* _para desativar._`,
+    `🎮 *LootFlow* — acorda\n\n${lines}\n\nEsse drop não vai se registrar sozinho né 😒\nhttps://www.nspx.dev/LootFlow\n\n_Responda_ *PARAR* _para desativar._`,
 ]
 
-const LINK = 'https://nspxmiguel.github.io/LootFlow'
+const LINK = 'https://www.nspx.dev/LootFlow'
 const PARAR = `\n\n_Responda_ *PARAR* _pra me calar._`
 
 const REMINDERS_XINGAMENTOS = [
@@ -82,20 +82,20 @@ const REMINDERS_XINGAMENTOS = [
 
 const REMINDERS_NORMAL_EN = [
   (lines: string) =>
-    `🎮 *LootFlow* — Reminder\n\nStill have drops to collect this week:\n${lines}\n\n👉 https://nspxmiguel.github.io/LootFlow\n\n_Reply_ *STOP* _to disable._`,
+    `🎮 *LootFlow* — Reminder\n\nStill have drops to collect this week:\n${lines}\n\n👉 https://www.nspx.dev/LootFlow\n\n_Reply_ *STOP* _to disable._`,
   (lines: string) =>
-    `🎮 *LootFlow* — Hey!\n\nDon't forget your drops:\n${lines}\n\nLog them at: https://nspxmiguel.github.io/LootFlow\n\n_Reply_ *STOP* _to disable._`,
+    `🎮 *LootFlow* — Hey!\n\nDon't forget your drops:\n${lines}\n\nLog them at: https://www.nspx.dev/LootFlow\n\n_Reply_ *STOP* _to disable._`,
   (lines: string) =>
-    `🎮 *LootFlow* — Drop available\n\n${lines}\n\nMoney waiting for you 💰\nhttps://nspxmiguel.github.io/LootFlow\n\n_Reply_ *STOP* _to disable._`,
+    `🎮 *LootFlow* — Drop available\n\n${lines}\n\nMoney waiting for you 💰\nhttps://www.nspx.dev/LootFlow\n\n_Reply_ *STOP* _to disable._`,
 ]
 
 const REMINDERS_ENCHESACO_EN = [
   (lines: string) =>
-    `🔔 *LootFlow* — Hey!\n\nStill have pending drops:\n${lines}\n\n👉 https://nspxmiguel.github.io/LootFlow\n\n_Reply_ *STOP* _to disable._`,
+    `🔔 *LootFlow* — Hey!\n\nStill have pending drops:\n${lines}\n\n👉 https://www.nspx.dev/LootFlow\n\n_Reply_ *STOP* _to disable._`,
   (lines: string) =>
-    `⚠️ *LootFlow* — Still haven't done it?\n\nThese drops are waiting:\n${lines}\n\nGo log them: https://nspxmiguel.github.io/LootFlow\n\n_Reply_ *STOP* _to disable._`,
+    `⚠️ *LootFlow* — Still haven't done it?\n\nThese drops are waiting:\n${lines}\n\nGo log them: https://www.nspx.dev/LootFlow\n\n_Reply_ *STOP* _to disable._`,
   (lines: string) =>
-    `😤 *LootFlow* — Seriously?\n\nYou still haven't registered:\n${lines}\n\nThe money is RIGHT THERE 💸\nhttps://nspxmiguel.github.io/LootFlow\n\n_Reply_ *STOP* _to disable._`,
+    `😤 *LootFlow* — Seriously?\n\nYou still haven't registered:\n${lines}\n\nThe money is RIGHT THERE 💸\nhttps://www.nspx.dev/LootFlow\n\n_Reply_ *STOP* _to disable._`,
 ]
 
 export function buildReminderMessage(
@@ -170,7 +170,7 @@ export function buildWeeklySummaryMessage(data: WeeklySummaryData): string {
     `📊 Resultado:\n${accountLines}\n` +
     pendingWarning +
     `\n💰 Total: *R$ ${data.totalCashout.toFixed(2)}* em ${data.totalDrops} drop${data.totalDrops !== 1 ? 's' : ''}\n\n` +
-    `👉 https://nspxmiguel.github.io/LootFlow`
+    `👉 https://www.nspx.dev/LootFlow`
   )
 }
 
@@ -217,7 +217,7 @@ export function buildTestMessage(lang: 'pt' | 'en' = 'pt'): string {
 
 export function buildDropStatusMessage(accounts: Array<{ name: string; drops: number; cashout: number }>): string {
   if (accounts.length === 0) {
-    return `🎮 *LootFlow* — Status\n\nNenhuma conta ativa cadastrada.\n\n👉 https://nspxmiguel.github.io/LootFlow`
+    return `🎮 *LootFlow* — Status\n\nNenhuma conta ativa cadastrada.\n\n👉 https://www.nspx.dev/LootFlow`
   }
   const lines = accounts.map(a => {
     const bar = a.drops >= 2 ? '✅' : a.drops === 1 ? '🟡' : '❌'
@@ -263,13 +263,13 @@ export function buildHelpMessage(lang: 'pt' | 'en' = 'pt'): string {
     return (
       `🎮 *LootFlow Bot* — Commands\n\n` +
       COMMANDS_LIST_EN +
-      `\n\n👉 https://nspxmiguel.github.io/LootFlow`
+      `\n\n👉 https://www.nspx.dev/LootFlow`
     )
   }
   return (
     `🎮 *LootFlow Bot* — Comandos\n\n` +
     COMMANDS_LIST_PT +
-    `\n\n👉 https://nspxmiguel.github.io/LootFlow`
+    `\n\n👉 https://www.nspx.dev/LootFlow`
   )
 }
 
@@ -280,14 +280,14 @@ export function buildUnknownCommandMessage(original: string, lang: 'pt' | 'en' =
       `❓ I didn't recognize the command *"${safe}"*.\n\n` +
       `Available commands:\n` +
       COMMANDS_LIST_EN +
-      `\n\n👉 https://nspxmiguel.github.io/LootFlow`
+      `\n\n👉 https://www.nspx.dev/LootFlow`
     )
   }
   return (
     `❓ Não reconheci o comando *"${safe}"*.\n\n` +
     `Comandos disponíveis:\n` +
     COMMANDS_LIST_PT +
-    `\n\n👉 https://nspxmiguel.github.io/LootFlow`
+    `\n\n👉 https://www.nspx.dev/LootFlow`
   )
 }
 
